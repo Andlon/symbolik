@@ -12,7 +12,19 @@ class TokenizeSpec : Spek() {
 
             on("tokenizing a single integer constant") {
                 it("should return an integer constant token") {
-                    shouldEqual(listOf(Token.IntegerConstant(5)), tokenize("5"))
+                    shouldEqual(listOf(Token.Integer(5)), tokenize("5"))
+                }
+            }
+
+            on("tokenizing a single decimal symbol") {
+                it("should return a decimal token") {
+                    shouldEqual(listOf(Token.Decimal(3.3)), tokenize("3.3"))
+                }
+            }
+
+            on("tokenizing a name") {
+                it("should return a name token") {
+                    shouldEqual(listOf(Token.Name("a0BC")), tokenize("a0BC"))
                 }
             }
 
