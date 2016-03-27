@@ -17,9 +17,13 @@ private fun isValidName(str: String) =
 
 private fun isValidInteger(str: String) = str.isNotEmpty() && str.all { it.isDigit() }
 
-// TODO: Implement scientific notation support?
-private fun isValidDecimal(str: String) =
-        str.isNotEmpty() && str.all { it.isLetter() || it == '.' } && str.count { it == '.' } <= 1
+private fun isValidDecimal(str: String): Boolean {
+    // TODO: Implement scientific notation support?
+    val dotCount = str.count { it == '.' }
+    val charactersAreAcceptable = str.all { it.isDigit() || it == '.' }
+    val lastCharacterIsDigit = str.lastOrNull()?.isDigit()
+    return str.isNotEmpty() && charactersAreAcceptable && (lastCharacterIsDigit == true) && dotCount <= 1
+}
 
 private fun parseSingleToken(str: String): Token? =
     when (str) {
@@ -44,6 +48,5 @@ private fun createTokenWithRemainder(token: Token?, remainder: String) =
 private fun longestTokenWithRemainder(str: String): TokenWithRemainder? =
         (1 .. str.length)
                 .map { numChars -> createTokenWithRemainder(parseSingleToken(str.take(numChars)), str.drop(numChars)) }
-                .dropWhile { it == null }
-                .takeWhile { it != null }
+                .filterNotNull()
                 .lastOrNull()

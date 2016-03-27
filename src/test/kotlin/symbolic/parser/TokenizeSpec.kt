@@ -18,7 +18,10 @@ class TokenizeSpec : Spek() {
 
             on("tokenizing a single decimal symbol") {
                 it("should return a decimal token") {
-                    shouldEqual(listOf(Token.Decimal(3.3)), tokenize("3.3"))
+                    shouldEqual(listOf(Token.Decimal(3.34)), tokenize("3.34"))
+                }
+                it("should understand omitted leading zeros") {
+                    shouldEqual(listOf(Token.Decimal(0.55)), tokenize(".55"))
                 }
             }
 
