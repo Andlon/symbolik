@@ -8,15 +8,15 @@ import org.jetbrains.spek.api.shouldEqual
  */
 class TokenizeSpec : Spek() {
     init {
-        given("the tokenizer on single inputs") {
+        given("the tokenizer on single-token inputs") {
 
-            on("tokenizing a single integer constant") {
+            on("tokenizing an integer") {
                 it("should return an integer constant token") {
                     shouldEqual(listOf(Token.Integer(5)), tokenize("5"))
                 }
             }
 
-            on("tokenizing a single decimal symbol") {
+            on("tokenizing a decimal number") {
                 it("should return a decimal token") {
                     shouldEqual(listOf(Token.Decimal(3.34)), tokenize("3.34"))
                 }
@@ -31,19 +31,19 @@ class TokenizeSpec : Spek() {
                 }
             }
 
-            on("tokenizing a single multiplication symbol") {
+            on("tokenizing a multiplication symbol") {
                 it("should return a times token") {
                     shouldEqual(listOf(Token.Times), tokenize("*"))
                 }
             }
 
-            on("tokenizing a single plus symbol") {
+            on("tokenizing a plus symbol") {
                 it("should return a plus token") {
                     shouldEqual(listOf(Token.Plus), tokenize("+"))
                 }
             }
 
-            on("tokenizing a single minus symbol") {
+            on("tokenizing a minus symbol") {
                 it("should return a minus token") {
                     shouldEqual(listOf(Token.Minus), tokenize("-"))
                 }
