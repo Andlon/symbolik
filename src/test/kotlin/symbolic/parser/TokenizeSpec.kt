@@ -52,6 +52,29 @@ class TokenizeSpec : Spek() {
                     shouldEqual(listOf(Token.Minus), tokenize("-"))
                 }
             }
+
+            on("tokenizing pure whitespace") {
+                it("should return an empty list") {
+                    shouldEqual(emptyList<Token>(), tokenize(" "))
+                }
+            }
+        }
+
+        given("the tokenizer on multi-token inputs") {
+            on("integers followed by names without spacing") {
+                it("should give an integer token followed by a name token") {
+                    shouldEqual(listOf(Token.Integer(3), Token.Name("x")), tokenize("3x"))
+                }
+            }
+            on("a series of arbitrary tokens") {
+                val tokenString = "3.3+4 abcd*+"
+                val tokens = listOf(Token.Decimal(3.3), Token.Plus, Token.Integer(4),
+                        Token.Name("abcd"), Token.Times, Token.Plus)
+
+                it("should yield the expected tokenization") {
+                    shouldEqual(tokens, tokenize(tokenString))
+                }
+            }
         }
 
     }
