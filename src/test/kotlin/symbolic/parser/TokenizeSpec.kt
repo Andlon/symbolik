@@ -63,6 +63,13 @@ class TokenizeSpec : Spek() {
                     shouldEqual(listOf(Token.Integer(3), Token.Name("x")), tokenize("3x"))
                 }
             }
+
+            on("two names separated by whitespace") {
+                it("should yield two name tokens") {
+                    shouldEqual(listOf(Token.Name("a"), Token.Name("b")), tokenize("a b"))
+                }
+            }
+
             on("a series of arbitrary tokens") {
                 val tokenString = "3.3+4 abcd*+"
                 val tokens = listOf(Token.Decimal(3.3), Token.Plus, Token.Integer(4),
@@ -72,6 +79,7 @@ class TokenizeSpec : Spek() {
                     shouldEqual(tokens, tokenize(tokenString))
                 }
             }
+
         }
 
     }
