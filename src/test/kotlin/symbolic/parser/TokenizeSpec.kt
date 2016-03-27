@@ -2,6 +2,7 @@ package symbolic.parser
 
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.shouldEqual
+import org.jetbrains.spek.api.shouldThrow
 
 /**
  * Created by andreas on 27.03.16.
@@ -22,6 +23,9 @@ class TokenizeSpec : Spek() {
                 }
                 it("should understand omitted leading zeros") {
                     shouldEqual(listOf(Token.Decimal(0.55)), tokenize(".55"))
+                }
+                it("should throw TokenizationException upon a trailing dot") {
+                    shouldThrow(TokenizationException::class.java, { tokenize("1.")})
                 }
             }
 
