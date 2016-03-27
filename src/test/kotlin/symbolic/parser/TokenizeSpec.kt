@@ -4,9 +4,6 @@ import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.shouldEqual
 import org.jetbrains.spek.api.shouldThrow
 
-/**
- * Created by andreas on 27.03.16.
- */
 class TokenizeSpec : Spek() {
     init {
         given("the tokenizer on single-token inputs") {
