@@ -5,9 +5,9 @@ import org.jetbrains.spek.api.shouldEqual
 import org.jetbrains.spek.api.shouldThrow
 import symbolic.expressions.*
 
-class BuildExpressionSpec : Spek() {
+class AssembleSpec : Spek() {
     init {
-        given("the expression builder on single tokens") {
+        given("assembly on single tokens") {
             on("an empty list of tokens") {
                 it("should return an EmptyExpression") {
                     shouldEqual(EmptyExpression, assemble(tokenize("")))
@@ -30,7 +30,7 @@ class BuildExpressionSpec : Spek() {
                 }
             }
         }
-        given("the expression builder on expressions with a binary operator") {
+        given("assembly on expressions with a binary operator") {
             on("two integers added together") {
                 it("should return a BinarySum consisting of the two integers") {
                     shouldEqual(BinarySum(Integer(1), Integer(2)), assemble(tokenize("1+2")))
@@ -89,7 +89,7 @@ class BuildExpressionSpec : Spek() {
             }
         }
 
-        given("the expression builder on invalid input") {
+        given("assembly on invalid input") {
             on("input with a trailing minus operator") {
                 it("should throw an AssemblyException") {
                     shouldThrow(AssemblyException::class.java, { assemble(tokenize("1-"))})
