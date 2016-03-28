@@ -1,5 +1,13 @@
 package symbolic.parser
 
+import symbolic.expressions.Constant
+import symbolic.expressions.Expression
+import symbolic.expressions.Variable
+import symbolic.expressions.BinaryOperator
+import java.util.Stack
+import java.util.Queue
+import java.util.ArrayDeque
+
 class TokenizationException(message: String) : Exception(message)
 
 fun tokenize(str: String) : List<Token> = recursivelyTokenize(emptyList(), str)
@@ -15,6 +23,48 @@ tailrec private fun recursivelyTokenize(tokens: List<Token>, remaining: String):
         null -> throw TokenizationException("Invalid token " + remaining)
         else -> recursivelyTokenize(tokens + result.token, result.remainder)
     }
+}
+
+fun buildExpression(tokens: List<Token>): Expression {
+    // The following is an implementation of the Shunting-yard algorithm (Dijkstra), as specified on Wikipedia:
+    // https://en.wikipedia.org/wiki/Shunting-yard_algorithm
+    val stack = Stack<Token.BinaryOperator>()
+    val output: Queue<Expression> = ArrayDeque()
+
+    for (token in tokens) {
+        when (token) {
+            is Token.Constant -> output.add(Constant.fromToken(token))
+        // TODO: So far we assume all names are variables. Later we want to support functions, textual operators etc.
+            is Token.Name -> output.add(Variable.fromToken(token))
+            is Token.BinaryOperator -> {
+                while (stack.isNotEmpty()) {
+                    val o1 = token
+                    val o2 = stack.peek()
+                    if ((o1.isLeftAssociative() && o1.precedence() <= o2.precedence())
+                            || (o1.isRightAssociative() && o1.precedence() < o2.precedence())) {
+                        applyOperatorToExpressions(o2, output)
+                        stack.pop()
+                    } else {
+                        break
+                    }
+                }
+                stack.push(token)
+            }
+        }
+    }
+
+    while (stack.isNotEmpty()) {
+        applyOperatorToExpressions(stack.pop(), output)
+    }
+
+    return output.poll()
+}
+
+fun applyOperatorToExpressions(token: Token.BinaryOperator, expressions: Queue<Expression>) {
+    val left = expressions.poll()
+    val right = expressions.poll()
+    val expr = BinaryOperator.fromToken(token, left, right)
+    expressions.add(expr)
 }
 
 private fun parseSingleToken(str: String): Token? =

@@ -2,12 +2,54 @@ package symbolic.parser
 
 interface Token {
     interface Constant : Token
+
     data class Integer(val value: Int) : Constant
     data class Decimal(val value: Double) : Constant
+
     data class Name(val value: String) : Token
-    object Times : Token
-    object Plus : Token
-    object Minus : Token
+
+    interface BinaryOperator : Token {
+        enum class Associativity {
+            Left,
+            Right,
+            Both
+        }
+
+        open fun associativity(): Associativity
+        open fun precedence(): Int
+
+        fun isLeftAssociative() = when (associativity()) {
+            Associativity.Left -> true
+            Associativity.Right -> false
+            Associativity.Both -> true
+        }
+
+        fun isRightAssociative() = when (associativity()) {
+            Associativity.Left -> false
+            Associativity.Right -> true
+            Associativity.Both -> true
+        }
+    }
+
+    object Plus : BinaryOperator {
+        override fun associativity() =  BinaryOperator.Associativity.Both
+        override fun precedence() = 2
+    }
+
+    object Minus : BinaryOperator {
+        override fun associativity() =  BinaryOperator.Associativity.Left
+        override fun precedence() = 2
+    }
+
+    object Times : BinaryOperator {
+        override fun associativity() =  BinaryOperator.Associativity.Both
+        override fun precedence() = 3
+    }
+
+    object Division : BinaryOperator {
+        override fun associativity() = BinaryOperator.Associativity.Left
+        override fun precedence() = 3
+    }
 }
 
 fun isValidName(str: String) =
