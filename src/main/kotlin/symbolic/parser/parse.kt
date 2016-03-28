@@ -1,6 +1,7 @@
 package symbolic.parser
 
 import symbolic.expressions.*
+import symbolic.util.popOrNull
 import java.util.*
 
 class TokenizationException(message: String) : Exception(message)
@@ -58,8 +59,6 @@ fun assemble(tokens: List<Token>): Expression {
         false -> EmptyExpression
     }
 }
-
-fun <T> Stack<T>.popOrNull(): T? = try { this.pop() } catch(e: EmptyStackException) { null }
 
 fun applyOperatorToExpressions(token: Token.BinaryOperator, expressions: Stack<Expression>) {
     val right = expressions.popOrNull()
