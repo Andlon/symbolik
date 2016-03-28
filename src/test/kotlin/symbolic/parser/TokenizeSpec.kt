@@ -55,6 +55,18 @@ class TokenizeSpec : Spek() {
                     shouldEqual(emptyList<Token>(), tokenize(" "))
                 }
             }
+
+            on("tokenizing a left paranthesis") {
+                it("should return a LeftParanthesis") {
+                    shouldEqual(listOf(Token.LeftParanthesis), tokenize("("))
+                }
+            }
+
+            on("tokenizing a right paranthesis") {
+                it("should return a RightParanthesis") {
+                    shouldEqual(listOf(Token.RightParanthesis), tokenize(")"))
+                }
+            }
         }
 
         given("the tokenizer on multi-token inputs") {

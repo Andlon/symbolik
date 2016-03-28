@@ -85,6 +85,8 @@ private fun parseSingleToken(str: String): Token? =
             "+" -> Token.Plus
             "-" -> Token.Minus
             "/" -> Token.Division
+            "(" -> Token.LeftParanthesis
+            ")" -> Token.RightParanthesis
             else -> when {
                 isValidName(str) -> Token.Name(str)
                 isValidInteger(str) -> Token.Integer(str.toInt())
