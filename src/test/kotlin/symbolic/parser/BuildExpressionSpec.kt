@@ -8,6 +8,12 @@ import symbolic.expressions.*
 class BuildExpressionSpec : Spek() {
     init {
         given("the expression builder on single tokens") {
+            on("an empty list of tokens") {
+                it("should return an EmptyExpression") {
+                    shouldEqual(EmptyExpression, assemble(tokenize("")))
+                }
+            }
+
             on("a single integer") {
                 it("should return an Integer expression with the same value") {
                     shouldEqual(Integer(3), assemble(tokenize("3")))

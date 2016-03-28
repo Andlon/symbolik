@@ -2,6 +2,8 @@ package symbolic.expressions
 
 import symbolic.parser.Token
 
+object EmptyExpression : Expression
+
 interface Constant : Expression {
     companion object {
         fun fromToken(token: Token.Constant) = when(token) {

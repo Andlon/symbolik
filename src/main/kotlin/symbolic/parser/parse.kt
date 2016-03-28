@@ -1,9 +1,6 @@
 package symbolic.parser
 
-import symbolic.expressions.Constant
-import symbolic.expressions.Expression
-import symbolic.expressions.Variable
-import symbolic.expressions.BinaryOperator
+import symbolic.expressions.*
 import java.util.Stack
 import java.util.Queue
 import java.util.ArrayDeque
@@ -58,7 +55,11 @@ fun assemble(tokens: List<Token>): Expression {
         applyOperatorToExpressions(stack.pop(), output)
     }
 
-    return output.poll()
+    val expr = output.poll()
+    return when (expr) {
+        null -> EmptyExpression
+        else -> expr
+    }
 }
 
 fun applyOperatorToExpressions(token: Token.BinaryOperator, expressions: Queue<Expression>) {
