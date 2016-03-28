@@ -17,6 +17,7 @@ interface Token {
 
         open fun associativity(): Associativity
         open fun precedence(): Int
+        open fun presentation(): String
 
         fun isLeftAssociative() = when (associativity()) {
             Associativity.Left -> true
@@ -34,21 +35,25 @@ interface Token {
     object Plus : BinaryOperator {
         override fun associativity() =  BinaryOperator.Associativity.Both
         override fun precedence() = 2
+        override fun presentation() = "+"
     }
 
     object Minus : BinaryOperator {
         override fun associativity() =  BinaryOperator.Associativity.Left
         override fun precedence() = 2
+        override fun presentation() = "-"
     }
 
     object Times : BinaryOperator {
         override fun associativity() =  BinaryOperator.Associativity.Both
         override fun precedence() = 3
+        override fun presentation() = "*"
     }
 
     object Division : BinaryOperator {
         override fun associativity() = BinaryOperator.Associativity.Left
         override fun precedence() = 3
+        override fun presentation() = "/"
     }
 }
 

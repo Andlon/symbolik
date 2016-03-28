@@ -2,6 +2,7 @@ package symbolic.parser
 
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.shouldEqual
+import org.jetbrains.spek.api.shouldThrow
 import symbolic.expressions.*
 
 class BuildExpressionSpec : Spek() {
@@ -78,6 +79,58 @@ class BuildExpressionSpec : Spek() {
                 it("should return a composite BinarySum where the right side is multiplied by -1") {
                     val expected = BinarySum(x, BinaryProduct(Integer(-1), Integer(1)))
                     shouldEqual(expected, assemble(tokenize("x-1")))
+                }
+            }
+        }
+
+        given("the expression builder on invalid input") {
+            on("input with a trailing minus operator") {
+                it("should throw an AssemblyException") {
+                    shouldThrow(AssemblyException::class.java, { assemble(tokenize("1-"))})
+                }
+            }
+
+            on("input with a trailing plus operator") {
+                it("should throw an AssemblyException") {
+                    shouldThrow(AssemblyException::class.java, { assemble(tokenize("1+"))})
+                }
+            }
+
+            on("input with a trailing multiplication operator") {
+                it("should throw an AssemblyException") {
+                    shouldThrow(AssemblyException::class.java, { assemble(tokenize("1*"))})
+                }
+            }
+
+            on("input with a trailing division operator") {
+                it("should throw an AssemblyException") {
+                    shouldThrow(AssemblyException::class.java, { assemble(tokenize("1/"))})
+                }
+            }
+
+            on("input with a leading plus operator") {
+                it("should throw an AssemblyException") {
+                    // TODO: Ignore leading plus to allow for this, since it's mathematically correct
+                    shouldThrow(AssemblyException::class.java, { assemble(tokenize("+1"))})
+                }
+            }
+
+            on("input with a leading minus operator") {
+                it("should throw an AssemblyException") {
+                    // TODO: Teach assembler to understand these situations
+                    shouldThrow(AssemblyException::class.java, { assemble(tokenize("-1"))})
+                }
+            }
+
+            on("input with a leading multiplication operator") {
+                it("should throw an AssemblyException") {
+                    shouldThrow(AssemblyException::class.java, { assemble(tokenize("*1"))})
+                }
+            }
+
+            on("input with a leading division operator") {
+                it("should throw an AssemblyException") {
+                    shouldThrow(AssemblyException::class.java, { assemble(tokenize("/1"))})
                 }
             }
         }

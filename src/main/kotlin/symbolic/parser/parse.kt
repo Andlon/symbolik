@@ -9,6 +9,7 @@ import java.util.Queue
 import java.util.ArrayDeque
 
 class TokenizationException(message: String) : Exception(message)
+class AssemblyException(message: String) : Exception(message)
 
 fun tokenize(str: String) : List<Token> = recursivelyTokenize(emptyList(), str)
 
@@ -63,6 +64,18 @@ fun assemble(tokens: List<Token>): Expression {
 fun applyOperatorToExpressions(token: Token.BinaryOperator, expressions: Queue<Expression>) {
     val left = expressions.poll()
     val right = expressions.poll()
+
+    if (left == null || right == null) {
+        val stem = "Can not apply binary operator " + token.presentation()
+        val message = stem + when {
+            left == null && right == null -> " without operands."
+            left == null -> " with no left hand operand."
+            right == null -> " with no right hand operand."
+            else -> "."
+        }
+        throw AssemblyException(message)
+    }
+
     val expr = BinaryOperator.fromToken(token, left, right)
     expressions.add(expr)
 }
@@ -72,6 +85,7 @@ private fun parseSingleToken(str: String): Token? =
             "*" -> Token.Times
             "+" -> Token.Plus
             "-" -> Token.Minus
+            "/" -> Token.Division
             else -> when {
                 isValidName(str) -> Token.Name(str)
                 isValidInteger(str) -> Token.Integer(str.toInt())
