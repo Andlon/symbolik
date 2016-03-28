@@ -25,7 +25,7 @@ tailrec private fun recursivelyTokenize(tokens: List<Token>, remaining: String):
     }
 }
 
-fun buildExpression(tokens: List<Token>): Expression {
+fun assemble(tokens: List<Token>): Expression {
     // The following is an implementation of the Shunting-yard algorithm (Dijkstra), as specified on Wikipedia:
     // https://en.wikipedia.org/wiki/Shunting-yard_algorithm
     val stack = Stack<Token.BinaryOperator>()
