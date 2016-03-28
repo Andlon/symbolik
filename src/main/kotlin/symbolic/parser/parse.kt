@@ -1,9 +1,7 @@
 package symbolic.parser
 
 import symbolic.expressions.*
-import java.util.Stack
-import java.util.Queue
-import java.util.ArrayDeque
+import java.util.*
 
 class TokenizationException(message: String) : Exception(message)
 class AssemblyException(message: String) : Exception(message)
@@ -27,7 +25,7 @@ fun assemble(tokens: List<Token>): Expression {
     // The following is an implementation of the Shunting-yard algorithm (Dijkstra), as specified on Wikipedia:
     // https://en.wikipedia.org/wiki/Shunting-yard_algorithm
     val stack = Stack<Token.BinaryOperator>()
-    val output: Queue<Expression> = ArrayDeque()
+    val output = Stack<Expression>()
 
     for (token in tokens) {
         when (token) {
@@ -55,16 +53,17 @@ fun assemble(tokens: List<Token>): Expression {
         applyOperatorToExpressions(stack.pop(), output)
     }
 
-    val expr = output.poll()
-    return when (expr) {
-        null -> EmptyExpression
-        else -> expr
+    return when (output.isNotEmpty()) {
+        true -> output.pop()
+        false -> EmptyExpression
     }
 }
 
-fun applyOperatorToExpressions(token: Token.BinaryOperator, expressions: Queue<Expression>) {
-    val left = expressions.poll()
-    val right = expressions.poll()
+fun <T> Stack<T>.popOrNull(): T? = try { this.pop() } catch(e: EmptyStackException) { null }
+
+fun applyOperatorToExpressions(token: Token.BinaryOperator, expressions: Stack<Expression>) {
+    val right = expressions.popOrNull()
+    val left = expressions.popOrNull()
 
     if (left == null || right == null) {
         val stem = "Can not apply binary operator " + token.presentation()

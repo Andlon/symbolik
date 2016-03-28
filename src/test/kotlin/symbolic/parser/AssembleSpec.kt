@@ -89,6 +89,27 @@ class AssembleSpec : Spek() {
             }
         }
 
+        given("assembly of more complicated expressions") {
+            val x = Variable("x")
+            val y = Variable("y")
+            val z = Variable("z")
+            on("nested binary operators of different precedence") {
+                it("should return the expected composite expressions") {
+                    val tokens = tokenize("x * y + 3 * z")
+                    val expected = BinarySum(BinaryProduct(x, y), BinaryProduct(Integer(3), z))
+                    shouldEqual(expected, assemble(tokens))
+                }
+            }
+
+            on("taking the difference of two products") {
+                it("should return the expected composite expressions") {
+                    val tokens = tokenize("x * y - 3 * z")
+                    val expected = BinarySum(BinaryProduct(x, y), BinaryProduct(Integer(-1), BinaryProduct(Integer(3), z)))
+                    shouldEqual(expected, assemble(tokens))
+                }
+            }
+        }
+
         given("assembly on invalid input") {
             on("input with a trailing minus operator") {
                 it("should throw an AssemblyException") {
