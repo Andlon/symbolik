@@ -34,7 +34,7 @@ class TokenizeSpec : Spek() {
 
             on("tokenizing a multiplication symbol") {
                 it("should return a times token") {
-                    shouldEqual(listOf(Token.Times), tokenize("*"))
+                    shouldEqual(listOf(Token.BinaryOperator.Times), tokenize("*"))
                 }
             }
 
@@ -84,8 +84,8 @@ class TokenizeSpec : Spek() {
 
             on("a series of arbitrary tokens") {
                 val tokenString = "3.3+4 abcd*+"
-                val tokens = listOf(Token.Decimal(3.3), Token.BinaryPlus, Token.Integer(4),
-                        Token.Name("abcd"), Token.Times, Token.UnaryOperator.Plus)
+                val tokens = listOf(Token.Decimal(3.3), Token.BinaryOperator.Plus, Token.Integer(4),
+                        Token.Name("abcd"), Token.BinaryOperator.Times, Token.UnaryOperator.Plus)
 
                 it("should yield the expected tokenization") {
                     shouldEqual(tokens, tokenize(tokenString))

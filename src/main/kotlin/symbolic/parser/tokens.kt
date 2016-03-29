@@ -36,30 +36,30 @@ interface Token {
         }
     }
 
-    interface BinaryOperator : Operator
+    sealed class BinaryOperator : Operator {
+        object Plus : BinaryOperator() {
+            override fun associativity() = Operator.Associativity.Both
+            override fun precedence() = 2
+            override fun presentation() = "+"
+        }
 
-    object BinaryPlus : BinaryOperator {
-        override fun associativity() = Operator.Associativity.Both
-        override fun precedence() = 2
-        override fun presentation() = "+"
-    }
+        object Minus : BinaryOperator() {
+            override fun associativity() = Operator.Associativity.Left
+            override fun precedence() = 2
+            override fun presentation() = "-"
+        }
 
-    object BinaryMinus : BinaryOperator {
-        override fun associativity() = Operator.Associativity.Left
-        override fun precedence() = 2
-        override fun presentation() = "-"
-    }
+        object Times : BinaryOperator() {
+            override fun associativity() = Operator.Associativity.Both
+            override fun precedence() = 3
+            override fun presentation() = "*"
+        }
 
-    object Times : BinaryOperator {
-        override fun associativity() = Operator.Associativity.Both
-        override fun precedence() = 3
-        override fun presentation() = "*"
-    }
-
-    object Division : BinaryOperator {
-        override fun associativity() = Operator.Associativity.Left
-        override fun precedence() = 3
-        override fun presentation() = "/"
+        object Division : BinaryOperator() {
+            override fun associativity() = Operator.Associativity.Left
+            override fun precedence() = 3
+            override fun presentation() = "/"
+        }
     }
 
     sealed class UnaryOperator : Operator {

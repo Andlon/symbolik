@@ -21,8 +21,8 @@ private fun processUnaryOperators(tokens: List<Token>): List<Token> {
     val firstElement = tokens.take(1)
             .map {
                 when(it) {
-                    is Token.BinaryPlus -> Token.UnaryOperator.Plus
-                    is Token.BinaryMinus -> Token.UnaryOperator.Minus
+                    is Token.BinaryOperator.Plus -> Token.UnaryOperator.Plus
+                    is Token.BinaryOperator.Minus -> Token.UnaryOperator.Minus
                     else -> it
                 }
             }
@@ -33,8 +33,8 @@ private fun processUnaryOperators(tokens: List<Token>): List<Token> {
                     is Token.Constant -> it.second
                     is Token.Name -> it.second
                     else -> when(it.second) {
-                        is Token.BinaryPlus -> Token.UnaryOperator.Plus
-                        is Token.BinaryMinus -> Token.UnaryOperator.Minus
+                        is Token.BinaryOperator.Plus -> Token.UnaryOperator.Plus
+                        is Token.BinaryOperator.Minus -> Token.UnaryOperator.Minus
                         else -> it.second
                     }
                 }
@@ -45,10 +45,10 @@ private fun processUnaryOperators(tokens: List<Token>): List<Token> {
 
 private fun parseSingleToken(str: String): Token? =
         when (str) {
-            "*" -> Token.Times
-            "+" -> Token.BinaryPlus
-            "-" -> Token.BinaryMinus
-            "/" -> Token.Division
+            "*" -> Token.BinaryOperator.Times
+            "+" -> Token.BinaryOperator.Plus
+            "-" -> Token.BinaryOperator.Minus
+            "/" -> Token.BinaryOperator.Division
             "(" -> Token.LeftParanthesis
             ")" -> Token.RightParanthesis
             else -> when {
