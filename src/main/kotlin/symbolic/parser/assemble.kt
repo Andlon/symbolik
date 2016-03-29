@@ -50,19 +50,18 @@ fun assemble(tokens: List<Token>): Expression {
         }
     }
 
-    while (stack.isNotEmpty()) {
-        val token = stack.pop()
-        when (token) {
-            is Token.Operator -> applyOperatorToExpressions(token, output)
+    stack.asReversed().forEach {
+        when (it) {
+            is Token.Operator -> applyOperatorToExpressions(it, output)
             is Token.Parenthesis -> throw MismatchedParenthesisException()
             else -> throw AssemblyException("Unexpected operator.")
         }
-
     }
 
-    return when (output.isNotEmpty()) {
-        true -> output.pop()
-        false -> EmptyExpression
+    return when {
+        output.isEmpty() -> EmptyExpression
+        output.size == 1 -> output.pop()
+        else -> throw AssemblyException("Unexpected error: Result is not single expression.")
     }
 }
 
