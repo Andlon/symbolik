@@ -22,7 +22,7 @@ class TokenizeSpec : Spek() {
                     shouldEqual(listOf(Token.Decimal(0.55)), tokenize(".55"))
                 }
                 it("should throw TokenizationException upon a trailing dot") {
-                    shouldThrow(TokenizationException::class.java, { tokenize("1.")})
+                    shouldThrow(TokenizationException::class.java, { tokenize("1.") })
                 }
             }
 
