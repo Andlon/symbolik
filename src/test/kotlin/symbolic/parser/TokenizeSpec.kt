@@ -40,13 +40,13 @@ class TokenizeSpec : Spek() {
 
             on("tokenizing a plus symbol") {
                 it("should return a plus token") {
-                    shouldEqual(listOf(Token.Plus), tokenize("+"))
+                    shouldEqual(listOf(Token.UnaryOperator.Plus), tokenize("+"))
                 }
             }
 
             on("tokenizing a minus symbol") {
                 it("should return a minus token") {
-                    shouldEqual(listOf(Token.Minus), tokenize("-"))
+                    shouldEqual(listOf(Token.UnaryOperator.Minus), tokenize("-"))
                 }
             }
 
@@ -84,8 +84,8 @@ class TokenizeSpec : Spek() {
 
             on("a series of arbitrary tokens") {
                 val tokenString = "3.3+4 abcd*+"
-                val tokens = listOf(Token.Decimal(3.3), Token.Plus, Token.Integer(4),
-                        Token.Name("abcd"), Token.Times, Token.Plus)
+                val tokens = listOf(Token.Decimal(3.3), Token.BinaryPlus, Token.Integer(4),
+                        Token.Name("abcd"), Token.Times, Token.UnaryOperator.Plus)
 
                 it("should yield the expected tokenization") {
                     shouldEqual(tokens, tokenize(tokenString))

@@ -30,6 +30,51 @@ class AssembleSpec : Spek() {
                 }
             }
         }
+
+        given("assembly on expressions with a unary operator") {
+            val x = Variable("x")
+            on("a unary plus and an integer") {
+                it("should yield the integer") {
+                    shouldEqual(Integer(2), assemble(tokenize("+2")))
+                }
+            }
+            on("a unary minus and an integer") {
+                it("should yield the integer multiplied by -1") {
+                    shouldEqual(Integer(-2), assemble(tokenize("-2")))
+                }
+            }
+            on("a unary plus and a variable") {
+                it("should yield the variable") {
+                    shouldEqual(x, assemble(tokenize("+x")))
+                }
+            }
+            on("a unary minus and a variable") {
+                it("should yield the variable") {
+                    shouldEqual(BinaryProduct(Integer(-1), x), assemble(tokenize("-x")))
+                }
+            }
+            on("a unary plus and a decimal") {
+                it("should yield the decimal") {
+                    shouldEqual(Decimal(4.3), assemble(tokenize("+4.3")))
+                }
+            }
+            on("a unary minus and a decimal") {
+                it("should yield the decimal multiplied by -1") {
+                    shouldEqual(Decimal(-4.3), assemble(tokenize("-4.3")))
+                }
+            }
+            on("subsequent unary plus operators applied to an integer") {
+                it("should leave the operand unchanged") {
+                    shouldEqual(Integer(3), assemble(tokenize("++3")))
+                }
+            }
+            on("subsequent unary minus operators applied to an integer") {
+                it("should negate the negative factor") {
+                    shouldEqual(Integer(3), assemble(tokenize("--3")))
+                }
+            }
+        }
+
         given("assembly on expressions with a binary operator") {
             on("two integers added together") {
                 it("should return a BinarySum consisting of the two integers") {
@@ -129,6 +174,20 @@ class AssembleSpec : Spek() {
                     shouldEqual(expected, assemble(tokens))
                 }
             }
+            on("composition of unary plus and parantheses") {
+                var tokens = tokenize("+(x + y)")
+                var expected = BinarySum(x, y)
+                it("should leave the expression unchanged") {
+                    shouldEqual(expected, assemble(tokens))
+                }
+            }
+            on("composition of unary minus and parantheses") {
+                var tokens = tokenize("-(x + y)")
+                var expected = BinaryProduct(Integer(-1), BinarySum(x, y))
+                it("should negate the expression") {
+                    shouldEqual(expected, assemble(tokens))
+                }
+            }
         }
 
         given("assembly on input with mismatched parantheses") {
@@ -186,20 +245,6 @@ class AssembleSpec : Spek() {
             on("input with a trailing division operator") {
                 it("should throw an AssemblyException") {
                     shouldThrow(AssemblyException::class.java, { assemble(tokenize("1/"))})
-                }
-            }
-
-            on("input with a leading plus operator") {
-                it("should throw an AssemblyException") {
-                    // TODO: Ignore leading plus to allow for this, since it's mathematically correct
-                    shouldThrow(AssemblyException::class.java, { assemble(tokenize("+1"))})
-                }
-            }
-
-            on("input with a leading minus operator") {
-                it("should throw an AssemblyException") {
-                    // TODO: Teach assembler to understand these situations
-                    shouldThrow(AssemblyException::class.java, { assemble(tokenize("-1"))})
                 }
             }
 

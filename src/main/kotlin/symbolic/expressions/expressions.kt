@@ -26,9 +26,9 @@ data class Decimal(val value: Double) : Constant
 interface BinaryOperator : Expression {
     companion object {
         fun fromToken(token: Token.BinaryOperator, left: Expression, right: Expression) = when(token) {
-            is Token.Plus -> BinarySum(left, right)
+            is Token.BinaryPlus -> BinarySum(left, right)
             is Token.Times -> BinaryProduct(left, right)
-            is Token.Minus -> BinarySum(left, BinaryProduct(Integer(-1), right))
+            is Token.BinaryMinus -> BinarySum(left, BinaryProduct(Integer(-1), right))
             else -> throw Exception("Unsupported binary operator")
         }
     }
@@ -36,3 +36,12 @@ interface BinaryOperator : Expression {
 
 data class BinarySum(val left: Expression, val right: Expression) : BinaryOperator
 data class BinaryProduct(val left: Expression, val right: Expression) : BinaryOperator
+
+fun applyUnaryOperator(token: Token.UnaryOperator, operand: Expression) = when(token) {
+    is Token.UnaryOperator.Plus -> operand
+    is Token.UnaryOperator.Minus -> when(operand) {
+        is Integer -> Integer(-1 * operand.value)
+        is Decimal -> Decimal(-1 * operand.value)
+        else -> BinaryProduct(Integer(-1), operand)
+    }
+}

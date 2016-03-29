@@ -12,7 +12,7 @@ interface Token {
     object LeftParanthesis : Paranthesis
     object RightParanthesis : Paranthesis
 
-    interface BinaryOperator : Token {
+    interface Operator : Token {
         enum class Associativity {
             Left,
             Right,
@@ -36,29 +36,46 @@ interface Token {
         }
     }
 
-    object Plus : BinaryOperator {
-        override fun associativity() =  BinaryOperator.Associativity.Both
+    interface BinaryOperator : Operator
+
+    object BinaryPlus : BinaryOperator {
+        override fun associativity() = Operator.Associativity.Both
         override fun precedence() = 2
         override fun presentation() = "+"
     }
 
-    object Minus : BinaryOperator {
-        override fun associativity() =  BinaryOperator.Associativity.Left
+    object BinaryMinus : BinaryOperator {
+        override fun associativity() = Operator.Associativity.Left
         override fun precedence() = 2
         override fun presentation() = "-"
     }
 
     object Times : BinaryOperator {
-        override fun associativity() =  BinaryOperator.Associativity.Both
+        override fun associativity() = Operator.Associativity.Both
         override fun precedence() = 3
         override fun presentation() = "*"
     }
 
     object Division : BinaryOperator {
-        override fun associativity() = BinaryOperator.Associativity.Left
+        override fun associativity() = Operator.Associativity.Left
         override fun precedence() = 3
         override fun presentation() = "/"
     }
+
+    sealed class UnaryOperator : Operator {
+        object Plus : UnaryOperator() {
+            override fun associativity() = Operator.Associativity.Right
+            override fun precedence() = 9
+            override fun presentation() = "+"
+        }
+
+        object Minus : UnaryOperator() {
+            override fun associativity() = Operator.Associativity.Right
+            override fun precedence() = 9
+            override fun presentation() = "-"
+        }
+    }
+
 }
 
 private val integerValidator = Regex("[0-9]+")

@@ -2,7 +2,8 @@ package symbolic.parser
 
 class TokenizationException(message: String) : Exception(message)
 
-fun tokenize(str: String) : List<Token> = recursivelyTokenize(emptyList(), str)
+fun tokenize(str: String) : List<Token> = processUnaryOperators(recursivelyTokenize(emptyList(), str))
+
 tailrec private fun recursivelyTokenize(tokens: List<Token>, remaining: String): List<Token> {
     // By ignoring leading whitespace we effectively make whitespace only work as separators of tokens
     val trimmedRemaining = remaining.trimStart()
@@ -16,11 +17,37 @@ tailrec private fun recursivelyTokenize(tokens: List<Token>, remaining: String):
     }
 }
 
+private fun processUnaryOperators(tokens: List<Token>): List<Token> {
+    val firstElement = tokens.take(1)
+            .map {
+                when(it) {
+                    is Token.BinaryPlus -> Token.UnaryOperator.Plus
+                    is Token.BinaryMinus -> Token.UnaryOperator.Minus
+                    else -> it
+                }
+            }
+
+    val remainingElements = tokens.zip(tokens.drop(1))
+            .map {
+                when (it.first) {
+                    is Token.Constant -> it.second
+                    is Token.Name -> it.second
+                    else -> when(it.second) {
+                        is Token.BinaryPlus -> Token.UnaryOperator.Plus
+                        is Token.BinaryMinus -> Token.UnaryOperator.Minus
+                        else -> it.second
+                    }
+                }
+            }
+
+    return firstElement + remainingElements
+}
+
 private fun parseSingleToken(str: String): Token? =
         when (str) {
             "*" -> Token.Times
-            "+" -> Token.Plus
-            "-" -> Token.Minus
+            "+" -> Token.BinaryPlus
+            "-" -> Token.BinaryMinus
             "/" -> Token.Division
             "(" -> Token.LeftParanthesis
             ")" -> Token.RightParanthesis

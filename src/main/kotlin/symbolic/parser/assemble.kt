@@ -19,10 +19,10 @@ fun assemble(tokens: List<Token>): Expression {
             is Token.Constant -> output.push(Constant.fromToken(token))
         // TODO: So far we assume all names are variables. Later we want to support functions, textual operators etc.
             is Token.Name -> output.push(Variable.fromToken(token))
-            is Token.BinaryOperator -> {
+            is Token.Operator -> {
                 val o1 = token
                 val isPoppable = { o2: Token -> when(o2) {
-                    is Token.BinaryOperator -> when {
+                    is Token.Operator -> when {
                         o1.isLeftAssociative() && o1.precedence() <= o2.precedence() -> true
                         o1.isRightAssociative() && o1.precedence() < o2.precedence() -> true
                         else -> false
@@ -31,14 +31,14 @@ fun assemble(tokens: List<Token>): Expression {
                 }}
 
                 stack.popWhile(isPoppable)
-                        .filterIsInstance<Token.BinaryOperator>()
+                        .filterIsInstance<Token.Operator>()
                         .forEach { applyOperatorToExpressions(it, output) }
                 stack.push(token)
             }
             is Token.LeftParanthesis -> stack.push(token)
             is Token.RightParanthesis -> {
                 stack.popWhile { it !is Token.LeftParanthesis }
-                        .filterIsInstance<Token.BinaryOperator>()
+                        .filterIsInstance<Token.Operator>()
                         .forEach { applyOperatorToExpressions(it, output) }
 
                 if (stack.isEmpty()) {
@@ -53,7 +53,7 @@ fun assemble(tokens: List<Token>): Expression {
     while (stack.isNotEmpty()) {
         val token = stack.pop()
         when (token) {
-            is Token.BinaryOperator -> applyOperatorToExpressions(token, output)
+            is Token.Operator -> applyOperatorToExpressions(token, output)
             is Token.Paranthesis -> throw MismatchedParanthesisException()
             else -> throw AssemblyException("Unexpected operator.")
         }
@@ -66,22 +66,31 @@ fun assemble(tokens: List<Token>): Expression {
     }
 }
 
-fun applyOperatorToExpressions(token: Token.BinaryOperator, expressions: Stack<Expression>) {
-    val right = expressions.popOrNull()
-    val left = expressions.popOrNull()
-
-    if (left == null || right == null) {
-        val stem = "Can not apply binary operator " + token.presentation()
-        val message = stem + when {
-            left == null && right == null -> " without operands."
-            left == null -> " with no left hand operand."
-            right == null -> " with no right hand operand."
-            else -> "."
+fun applyOperatorToExpressions(token: Token.Operator, expressions: Stack<Expression>) {
+    if (token is Token.UnaryOperator) {
+        val operand = expressions.popOrNull()
+        val expr = when(operand) {
+            null -> throw AssemblyException("Can not apply operator " + token.presentation() + " without operand.")
+            else -> applyUnaryOperator(token, operand)
         }
-        throw AssemblyException(message)
-    }
+        expressions.add(expr)
+    } else if (token is Token.BinaryOperator) {
+        val right = expressions.popOrNull()
+        val left = expressions.popOrNull()
 
-    val expr = BinaryOperator.fromToken(token, left, right)
-    expressions.add(expr)
+        if (left == null || right == null) {
+            val stem = "Can not apply binary operator " + token.presentation()
+            val message = stem + when {
+                left == null && right == null -> " without operands."
+                left == null -> " with no left hand operand."
+                right == null -> " with no right hand operand."
+                else -> "."
+            }
+            throw AssemblyException(message)
+        }
+
+        val expr = BinaryOperator.fromToken(token, left, right)
+        expressions.add(expr)
+    }
 }
 
