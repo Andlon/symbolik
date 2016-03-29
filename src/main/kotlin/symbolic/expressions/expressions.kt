@@ -29,7 +29,7 @@ interface BinaryOperator : Expression {
             is Token.BinaryOperator.Plus -> BinarySum(left, right)
             is Token.BinaryOperator.Times -> BinaryProduct(left, right)
             is Token.BinaryOperator.Minus -> BinarySum(left, BinaryProduct(Integer(-1), right))
-            else -> throw Exception("Unsupported binary operator")
+            is Token.BinaryOperator.Division -> EmptyExpression
         }
     }
 }
