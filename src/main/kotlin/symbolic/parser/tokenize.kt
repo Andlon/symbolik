@@ -17,26 +17,20 @@ tailrec private fun recursivelyTokenize(tokens: List<Token>, remaining: String):
     }
 }
 
-private fun processUnaryOperators(tokens: List<Token>): List<Token> {
-    val firstElement = tokens.take(1)
-            .map {
-                when(it) {
-                    is Token.BinaryOperator.Plus -> Token.UnaryOperator.Plus
-                    is Token.BinaryOperator.Minus -> Token.UnaryOperator.Minus
-                    else -> it
-                }
-            }
+private fun convertToUnary(token: Token) = when(token) {
+    Token.BinaryOperator.Plus -> Token.UnaryOperator.Plus
+    Token.BinaryOperator.Minus -> Token.UnaryOperator.Minus
+    else -> token
+}
 
+private fun processUnaryOperators(tokens: List<Token>): List<Token> {
+    val firstElement = tokens.take(1).map(::convertToUnary)
     val remainingElements = tokens.zip(tokens.drop(1))
             .map {
                 when (it.first) {
                     is Token.Constant -> it.second
                     is Token.Name -> it.second
-                    else -> when(it.second) {
-                        is Token.BinaryOperator.Plus -> Token.UnaryOperator.Plus
-                        is Token.BinaryOperator.Minus -> Token.UnaryOperator.Minus
-                        else -> it.second
-                    }
+                    else -> convertToUnary(it.second)
                 }
             }
 
