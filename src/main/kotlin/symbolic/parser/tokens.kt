@@ -8,9 +8,9 @@ interface Token {
 
     data class Name(val value: String) : Token
 
-    interface Paranthesis : Token
-    object LeftParanthesis : Paranthesis
-    object RightParanthesis : Paranthesis
+    interface Parenthesis : Token
+    object LeftParenthesis : Parenthesis
+    object RightParenthesis : Parenthesis
 
     interface Operator : Token {
         enum class Associativity {

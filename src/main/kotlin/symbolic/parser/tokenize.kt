@@ -49,8 +49,8 @@ private fun parseSingleToken(str: String): Token? =
             "+" -> Token.BinaryOperator.Plus
             "-" -> Token.BinaryOperator.Minus
             "/" -> Token.BinaryOperator.Division
-            "(" -> Token.LeftParanthesis
-            ")" -> Token.RightParanthesis
+            "(" -> Token.LeftParenthesis
+            ")" -> Token.RightParenthesis
             else -> when {
                 isValidName(str) -> Token.Name(str)
                 isValidInteger(str) -> Token.Integer(str.toInt())

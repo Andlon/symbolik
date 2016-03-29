@@ -6,7 +6,7 @@ import symbolic.util.popWhile
 import java.util.*
 
 open class AssemblyException(message: String) : Exception(message)
-class MismatchedParanthesisException : AssemblyException("Mismatched paranthesis")
+class MismatchedParenthesisException : AssemblyException("Mismatched parenthesis")
 
 fun assemble(tokens: List<Token>): Expression {
     // The following is an implementation of the Shunting-yard algorithm (Dijkstra), as specified on Wikipedia:
@@ -35,14 +35,14 @@ fun assemble(tokens: List<Token>): Expression {
                         .forEach { applyOperatorToExpressions(it, output) }
                 stack.push(token)
             }
-            is Token.LeftParanthesis -> stack.push(token)
-            is Token.RightParanthesis -> {
-                stack.popWhile { it !is Token.LeftParanthesis }
+            is Token.LeftParenthesis -> stack.push(token)
+            is Token.RightParenthesis -> {
+                stack.popWhile { it !is Token.LeftParenthesis }
                         .filterIsInstance<Token.Operator>()
                         .forEach { applyOperatorToExpressions(it, output) }
 
                 if (stack.isEmpty()) {
-                    throw MismatchedParanthesisException()
+                    throw MismatchedParenthesisException()
                 } else {
                     stack.pop()
                 }
@@ -54,7 +54,7 @@ fun assemble(tokens: List<Token>): Expression {
         val token = stack.pop()
         when (token) {
             is Token.Operator -> applyOperatorToExpressions(token, output)
-            is Token.Paranthesis -> throw MismatchedParanthesisException()
+            is Token.Parenthesis -> throw MismatchedParenthesisException()
             else -> throw AssemblyException("Unexpected operator.")
         }
 

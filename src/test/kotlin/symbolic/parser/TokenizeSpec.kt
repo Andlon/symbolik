@@ -56,15 +56,15 @@ class TokenizeSpec : Spek() {
                 }
             }
 
-            on("tokenizing a left paranthesis") {
-                it("should return a LeftParanthesis") {
-                    shouldEqual(listOf(Token.LeftParanthesis), tokenize("("))
+            on("tokenizing a left parenthesis") {
+                it("should return a LeftParenthesis") {
+                    shouldEqual(listOf(Token.LeftParenthesis), tokenize("("))
                 }
             }
 
-            on("tokenizing a right paranthesis") {
-                it("should return a RightParanthesis") {
-                    shouldEqual(listOf(Token.RightParanthesis), tokenize(")"))
+            on("tokenizing a right parenthesis") {
+                it("should return a RightParenthesis") {
+                    shouldEqual(listOf(Token.RightParenthesis), tokenize(")"))
                 }
             }
         }
