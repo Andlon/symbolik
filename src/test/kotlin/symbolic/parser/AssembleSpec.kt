@@ -100,12 +100,66 @@ class AssembleSpec : Spek() {
                     shouldEqual(expected, assemble(tokens))
                 }
             }
-
             on("taking the difference of two products") {
                 it("should return the expected composite expressions") {
                     val tokens = tokenize("x * y - 3 * z")
                     val expected = BinarySum(BinaryProduct(x, y), BinaryProduct(Integer(-1), BinaryProduct(Integer(3), z)))
                     shouldEqual(expected, assemble(tokens))
+                }
+            }
+            on("a single variable enclosed in parantheses") {
+                it("should return an expression consisting of the single variable") {
+                    shouldEqual(x, assemble(tokenize("(x)")))
+                }
+            }
+            on("a single integer enclosed in parantheses") {
+                it("should return an expression consisting of the single integer") {
+                    shouldEqual(Integer(3), assemble(tokenize("(3)")))
+                }
+            }
+            on("a single decimal number enclosed in parantheses") {
+                it("should return an expression consisting of the single decimal number") {
+                    shouldEqual(Decimal(5.4), assemble(tokenize("(5.4)")))
+                }
+            }
+            on("an expression where parantheses are used to counter natural precedence") {
+                var tokens = tokenize("(x + y) * (z + 1)")
+                var expected = BinaryProduct(BinarySum(x, y), BinarySum(z, Integer(1)))
+                it("should take parantheses into account and give the expected composite expression") {
+                    shouldEqual(expected, assemble(tokens))
+                }
+            }
+        }
+
+        given("assembly on input with mismatched parantheses") {
+            on("a single left paranthesis token") {
+                it("should throw a MismatchedParanthesisException") {
+                    shouldThrow(MismatchedParanthesisException::class.java, { assemble(tokenize("(")) })
+                }
+            }
+            on("a single right paranthesis token") {
+                it("should throw a MismatchedParanthesisException") {
+                    shouldThrow(MismatchedParanthesisException::class.java, { assemble(tokenize(")")) })
+                }
+            }
+            on("missing right paranthesis on simple expression") {
+                it("should throw a MismatchedParanthesisException") {
+                    shouldThrow(MismatchedParanthesisException::class.java, { assemble(tokenize("(1+2")) })
+                }
+            }
+            on("missing left paranthesis on simple expression") {
+                it("should throw a MismatchedParanthesisException") {
+                    shouldThrow(MismatchedParanthesisException::class.java, { assemble(tokenize("1+2)")) })
+                }
+            }
+            on("missing right paranthesis in composite expression") {
+                it("should throw a MismatchedParanthesisException") {
+                    shouldThrow(MismatchedParanthesisException::class.java, { assemble(tokenize("2 * (1 + 3")) })
+                }
+            }
+            on("missing left paranthesis in composite expression") {
+                it("should throw a MismatchedParanthesisException") {
+                    shouldThrow(MismatchedParanthesisException::class.java, { assemble(tokenize("2 * 1 + 3)")) })
                 }
             }
         }

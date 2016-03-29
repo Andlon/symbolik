@@ -2,10 +2,13 @@ package symbolic.parser
 
 import symbolic.expressions.*
 import symbolic.util.popOrNull
+import symbolic.util.popWhile
 import java.util.*
 
 class TokenizationException(message: String) : Exception(message)
-class AssemblyException(message: String) : Exception(message)
+
+open class AssemblyException(message: String) : Exception(message)
+class MismatchedParanthesisException : AssemblyException("Mismatched paranthesis")
 
 fun tokenize(str: String) : List<Token> = recursivelyTokenize(emptyList(), str)
 
@@ -25,20 +28,21 @@ tailrec private fun recursivelyTokenize(tokens: List<Token>, remaining: String):
 fun assemble(tokens: List<Token>): Expression {
     // The following is an implementation of the Shunting-yard algorithm (Dijkstra), as specified on Wikipedia:
     // https://en.wikipedia.org/wiki/Shunting-yard_algorithm
-    val stack = Stack<Token.BinaryOperator>()
+    val stack = Stack<Token>()
     val output = Stack<Expression>()
 
     for (token in tokens) {
         when (token) {
-            is Token.Constant -> output.add(Constant.fromToken(token))
+            is Token.Constant -> output.push(Constant.fromToken(token))
         // TODO: So far we assume all names are variables. Later we want to support functions, textual operators etc.
-            is Token.Name -> output.add(Variable.fromToken(token))
+            is Token.Name -> output.push(Variable.fromToken(token))
             is Token.BinaryOperator -> {
                 while (stack.isNotEmpty()) {
                     val o1 = token
                     val o2 = stack.peek()
-                    if ((o1.isLeftAssociative() && o1.precedence() <= o2.precedence())
-                            || (o1.isRightAssociative() && o1.precedence() < o2.precedence())) {
+                    if (o2 is Token.BinaryOperator &&
+                            ((o1.isLeftAssociative() && o1.precedence() <= o2.precedence())
+                            || (o1.isRightAssociative() && o1.precedence() < o2.precedence()))) {
                         applyOperatorToExpressions(o2, output)
                         stack.pop()
                     } else {
@@ -47,11 +51,29 @@ fun assemble(tokens: List<Token>): Expression {
                 }
                 stack.push(token)
             }
+            is Token.LeftParanthesis -> stack.push(token)
+            is Token.RightParanthesis -> {
+                val operators = stack.popWhile { it !is Token.LeftParanthesis }.filterIsInstance<Token.BinaryOperator>()
+                for (operator in operators)
+                    applyOperatorToExpressions(operator, output)
+
+                if (stack.isEmpty()) {
+                    throw MismatchedParanthesisException()
+                } else {
+                    stack.pop()
+                }
+            }
         }
     }
 
     while (stack.isNotEmpty()) {
-        applyOperatorToExpressions(stack.pop(), output)
+        val token = stack.pop()
+        when (token) {
+            is Token.BinaryOperator -> applyOperatorToExpressions(token, output)
+            is Token.Paranthesis -> throw MismatchedParanthesisException()
+            else -> throw AssemblyException("Unexpected operator.")
+        }
+
     }
 
     return when (output.isNotEmpty()) {
