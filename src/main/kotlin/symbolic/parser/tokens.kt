@@ -61,18 +61,17 @@ interface Token {
     }
 }
 
-fun isValidName(str: String) =
-        str.isNotEmpty() && str.first().isLetter() && str.all { it.isLetterOrDigit() }
+private val integerValidator = Regex("[0-9]+")
+private val decimalValidator = Regex("[0-9]*[.]*[0-9]+")
+private val nameValidator = Regex("[a-zA-Z][a-zA-Z0-9_]*")
 
-fun isValidInteger(str: String) = str.isNotEmpty() && str.all { it.isDigit() }
+// TODO: Implement scientific notation support for integer/decimal?
+fun isValidName(str: String) = nameValidator.matches(str)
+fun isValidInteger(str: String) = integerValidator.matches(str)
+fun isValidDecimal(str: String) = decimalValidator.matches(str)
 
-fun isValidDecimal(str: String): Boolean {
-    // TODO: Implement scientific notation support?
-    val dotCount = str.count { it == '.' }
-    val charactersAreAcceptable = str.all { it.isDigit() || it == '.' }
-    val lastCharacterIsDigit = str.lastOrNull()?.isDigit()
-    return str.isNotEmpty() && charactersAreAcceptable && (lastCharacterIsDigit == true) && dotCount <= 1
-}
+
+
 
 
 
