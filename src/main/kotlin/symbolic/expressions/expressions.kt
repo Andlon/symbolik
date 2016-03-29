@@ -29,13 +29,14 @@ interface BinaryOperator : Expression {
             is Token.BinaryOperator.Plus -> BinarySum(left, right)
             is Token.BinaryOperator.Times -> BinaryProduct(left, right)
             is Token.BinaryOperator.Minus -> BinarySum(left, BinaryProduct(Integer(-1), right))
-            is Token.BinaryOperator.Division -> EmptyExpression
+            is Token.BinaryOperator.Division -> Division(left, right)
         }
     }
 }
 
 data class BinarySum(val left: Expression, val right: Expression) : BinaryOperator
 data class BinaryProduct(val left: Expression, val right: Expression) : BinaryOperator
+data class Division(val left: Expression, val right: Expression) : BinaryOperator
 
 fun applyUnaryOperator(token: Token.UnaryOperator, operand: Expression) = when(token) {
     is Token.UnaryOperator.Plus -> operand

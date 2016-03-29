@@ -92,6 +92,11 @@ class AssembleSpec : Spek() {
                     shouldEqual(expected, assemble(tokenize("1-2")))
                 }
             }
+            on("an integer divided by another") {
+                it("should return a composite Division representing the fraction") {
+                    shouldEqual(Division(Integer(2), Integer(4)), assemble(tokenize("2/4")))
+                }
+            }
 
             val x = Variable("x")
             val y = Variable("y")
@@ -100,36 +105,41 @@ class AssembleSpec : Spek() {
                     shouldEqual(BinarySum(x, y), assemble(tokenize("x+y")))
                 }
             }
-
             on("two variables multiplied together") {
                 it("should return a BinaryProduct consisting of the two variables") {
                     shouldEqual(BinaryProduct(x, y), assemble(tokenize("x*y")))
                 }
             }
-
             on("a variable subtracted from another") {
                 it("should return a composite BinarySum where the right side is multiplied by -1") {
                     val expected = BinarySum(x, BinaryProduct(Integer(-1), y))
                     shouldEqual(expected, assemble(tokenize("x-y")))
                 }
             }
-
+            on("a variable divided by another") {
+                it("should return a composite Division representing the fraction") {
+                    shouldEqual(Division(x, y), assemble(tokenize("x/y")))
+                }
+            }
             on("a variable and an integer added together") {
                 it("should return a BinarySum of the two") {
                     shouldEqual(BinarySum(x, Integer(1)), assemble(tokenize("x+1")))
                 }
             }
-
             on("a variable and an integer multiplied together") {
                 it("should return a BinaryProduct of the two") {
                     shouldEqual(BinaryProduct(x, Integer(1)), assemble(tokenize("x*1")))
                 }
             }
-
             on("an integer subtracted from a variable") {
                 it("should return a composite BinarySum where the right side is multiplied by -1") {
                     val expected = BinarySum(x, BinaryProduct(Integer(-1), Integer(1)))
                     shouldEqual(expected, assemble(tokenize("x-1")))
+                }
+            }
+            on("an integer divided by a variable") {
+                it("should return a composite Division where the left side is divided by the right side") {
+                    shouldEqual(Division(Integer(2), x), assemble(tokenize("2/x")))
                 }
             }
         }
