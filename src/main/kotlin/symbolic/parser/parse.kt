@@ -37,25 +37,26 @@ fun assemble(tokens: List<Token>): Expression {
         // TODO: So far we assume all names are variables. Later we want to support functions, textual operators etc.
             is Token.Name -> output.push(Variable.fromToken(token))
             is Token.BinaryOperator -> {
-                while (stack.isNotEmpty()) {
-                    val o1 = token
-                    val o2 = stack.peek()
-                    if (o2 is Token.BinaryOperator &&
-                            ((o1.isLeftAssociative() && o1.precedence() <= o2.precedence())
-                            || (o1.isRightAssociative() && o1.precedence() < o2.precedence()))) {
-                        applyOperatorToExpressions(o2, output)
-                        stack.pop()
-                    } else {
-                        break
+                val o1 = token
+                val isPoppable = { o2: Token -> when(o2) {
+                    is Token.BinaryOperator -> when {
+                        o1.isLeftAssociative() && o1.precedence() <= o2.precedence() -> true
+                        o1.isRightAssociative() && o1.precedence() < o2.precedence() -> true
+                        else -> false
                     }
-                }
+                    else -> false
+                }}
+
+                stack.popWhile(isPoppable)
+                        .filterIsInstance<Token.BinaryOperator>()
+                        .forEach { applyOperatorToExpressions(it, output) }
                 stack.push(token)
             }
             is Token.LeftParanthesis -> stack.push(token)
             is Token.RightParanthesis -> {
-                val operators = stack.popWhile { it !is Token.LeftParanthesis }.filterIsInstance<Token.BinaryOperator>()
-                for (operator in operators)
-                    applyOperatorToExpressions(operator, output)
+                stack.popWhile { it !is Token.LeftParanthesis }
+                        .filterIsInstance<Token.BinaryOperator>()
+                        .forEach { applyOperatorToExpressions(it, output) }
 
                 if (stack.isEmpty()) {
                     throw MismatchedParanthesisException()
