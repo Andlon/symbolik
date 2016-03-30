@@ -56,6 +56,7 @@ class ExpressionSpec : Spek() {
         }
 
         given("simplification of expressions") {
+            val x = Variable("x")
             on("a sum of integers") {
                 it("should return a single integer representing the sum") {
                     shouldEqual(Integer(4), BinarySum(Integer(2), Integer(2)).simplify())
@@ -110,6 +111,12 @@ class ExpressionSpec : Spek() {
                 it("should return a single integer if A is divisible by B") {
                     val expr = Division(Integer(4), Integer(2))
                     shouldEqual(Integer(2), expr.simplify())
+                }
+            }
+            on("a product of integers multiplied by a variable") {
+                it("should multiply the integers and multiply with the variable") {
+                    val expr = BinaryProduct(BinaryProduct(Integer(2), Integer(2)), x)
+                    shouldEqual(BinaryProduct(Integer(4), x), expr.simplify())
                 }
             }
         }
