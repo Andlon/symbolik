@@ -50,7 +50,7 @@ class AssembleSpec : Spek() {
             }
             on("a unary minus and a variable") {
                 it("should yield the variable") {
-                    shouldEqual(BinaryProduct(Integer(-1), x), assemble(tokenize("-x")))
+                    shouldEqual(Negation(x), assemble(tokenize("-x")))
                 }
             }
             on("a unary plus and a decimal") {
@@ -78,7 +78,7 @@ class AssembleSpec : Spek() {
         given("assembly on expressions with a binary operator") {
             on("two integers added together") {
                 it("should return a BinarySum consisting of the two integers") {
-                    shouldEqual(BinarySum(Integer(1), Integer(2)), assemble(tokenize("1+2")))
+                    shouldEqual(Sum(Integer(1), Integer(2)), assemble(tokenize("1+2")))
                 }
             }
             on("two integers multiplied together") {
@@ -88,7 +88,7 @@ class AssembleSpec : Spek() {
             }
             on("an integer subtracted from another") {
                 it("should return a composite BinarySum where the right side is multiplied by -1") {
-                    val expected = BinarySum(Integer(1), BinaryProduct(Integer(-1), Integer(2)))
+                    val expected = Sum(Integer(1), Negation(Integer(2)))
                     shouldEqual(expected, assemble(tokenize("1-2")))
                 }
             }
@@ -102,7 +102,7 @@ class AssembleSpec : Spek() {
             val y = Variable("y")
             on("two variables added together") {
                 it("should return a BinarySum consisting of the two variables") {
-                    shouldEqual(BinarySum(x, y), assemble(tokenize("x+y")))
+                    shouldEqual(Sum(x, y), assemble(tokenize("x+y")))
                 }
             }
             on("two variables multiplied together") {
@@ -112,7 +112,7 @@ class AssembleSpec : Spek() {
             }
             on("a variable subtracted from another") {
                 it("should return a composite BinarySum where the right side is multiplied by -1") {
-                    val expected = BinarySum(x, BinaryProduct(Integer(-1), y))
+                    val expected = Sum(x, Negation(y))
                     shouldEqual(expected, assemble(tokenize("x-y")))
                 }
             }
@@ -123,7 +123,7 @@ class AssembleSpec : Spek() {
             }
             on("a variable and an integer added together") {
                 it("should return a BinarySum of the two") {
-                    shouldEqual(BinarySum(x, Integer(1)), assemble(tokenize("x+1")))
+                    shouldEqual(Sum(x, Integer(1)), assemble(tokenize("x+1")))
                 }
             }
             on("a variable and an integer multiplied together") {
@@ -133,7 +133,7 @@ class AssembleSpec : Spek() {
             }
             on("an integer subtracted from a variable") {
                 it("should return a composite BinarySum where the right side is multiplied by -1") {
-                    val expected = BinarySum(x, BinaryProduct(Integer(-1), Integer(1)))
+                    val expected = Sum(x, Negation(Integer(1)))
                     shouldEqual(expected, assemble(tokenize("x-1")))
                 }
             }
@@ -151,14 +151,14 @@ class AssembleSpec : Spek() {
             on("nested binary operators of different precedence") {
                 it("should return the expected composite expressions") {
                     val tokens = tokenize("x * y + 3 * z")
-                    val expected = BinarySum(BinaryProduct(x, y), BinaryProduct(Integer(3), z))
+                    val expected = Sum(BinaryProduct(x, y), BinaryProduct(Integer(3), z))
                     shouldEqual(expected, assemble(tokens))
                 }
             }
             on("taking the difference of two products") {
                 it("should return the expected composite expressions") {
                     val tokens = tokenize("x * y - 3 * z")
-                    val expected = BinarySum(BinaryProduct(x, y), BinaryProduct(Integer(-1), BinaryProduct(Integer(3), z)))
+                    val expected = Sum(BinaryProduct(x, y), Negation(BinaryProduct(Integer(3), z)))
                     shouldEqual(expected, assemble(tokens))
                 }
             }
@@ -179,21 +179,21 @@ class AssembleSpec : Spek() {
             }
             on("an expression where parentheses are used to counter natural precedence") {
                 var tokens = tokenize("(x + y) * (z + 1)")
-                var expected = BinaryProduct(BinarySum(x, y), BinarySum(z, Integer(1)))
+                var expected = BinaryProduct(Sum(x, y), Sum(z, Integer(1)))
                 it("should take parentheses into account and give the expected composite expression") {
                     shouldEqual(expected, assemble(tokens))
                 }
             }
             on("composition of unary plus and parentheses") {
                 var tokens = tokenize("+(x + y)")
-                var expected = BinarySum(x, y)
+                var expected = Sum(x, y)
                 it("should leave the expression unchanged") {
                     shouldEqual(expected, assemble(tokens))
                 }
             }
             on("composition of unary minus and parentheses") {
                 var tokens = tokenize("-(x + y)")
-                var expected = BinaryProduct(Integer(-1), BinarySum(x, y))
+                var expected = Negation(Sum(x, y))
                 it("should negate the expression") {
                     shouldEqual(expected, assemble(tokens))
                 }

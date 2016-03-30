@@ -30,27 +30,27 @@ class ExpressionSpec : Spek() {
             }
             on("a sum of an integer and a variable") {
                 it("should equal the sum") {
-                    shouldEqual("5 + x", BinarySum(Integer(5), x).text())
+                    shouldEqual("5 + x", Sum(Integer(5), x).text())
                 }
             }
-            on("a product of -1 and a variable subtracted from an integer") {
+            on("a negated variable subtracted from an integer") {
                 it("should be represented with a single minus operator") {
-                    shouldEqual("5 - x", BinarySum(Integer(5), BinaryProduct(Integer(-1), x)).text())
+                    shouldEqual("5 - x", Sum(Integer(5), Negation(x)).text())
                 }
             }
             on("a product of -1 and an integer subtracted from an integer") {
                 it("should be represented with a single minus operator") {
-                    shouldEqual("5 - 2", BinarySum(Integer(5), BinaryProduct(Integer(-1), Integer(2))).text())
+                    shouldEqual("5 - 2", Sum(Integer(5), Negation(Integer(2))).text())
                 }
             }
             on("a sum of a positive and negative integer") {
                 it("should be represented with a single minus operator") {
-                    shouldEqual("5 - 2", BinarySum(Integer(5), Integer(-2)).text())
+                    shouldEqual("5 - 2", Sum(Integer(5), Integer(-2)).text())
                 }
             }
             on("an expression that requires parentheses for grouping") {
                 it("should correctly apply the parentheses") {
-                    shouldEqual("(x - 2) * 2", BinaryProduct(BinarySum(x, Integer(-2)), Integer(2)).text())
+                    shouldEqual("(x - 2) * 2", BinaryProduct(Sum(x, Integer(-2)), Integer(2)).text())
                 }
             }
         }
@@ -59,20 +59,20 @@ class ExpressionSpec : Spek() {
             val x = Variable("x")
             on("a sum of integers") {
                 it("should return a single integer representing the sum") {
-                    shouldEqual(Integer(4), BinarySum(Integer(2), Integer(2)).simplify())
+                    shouldEqual(Integer(4), Sum(Integer(2), Integer(2)).simplify())
                 }
             }
             on("a sum of decimals") {
                 it("should return a single decimal representing the sum") {
-                    shouldEqual(Decimal(4.8), BinarySum(Decimal(2.8), Decimal(2.0)).simplify())
+                    shouldEqual(Decimal(4.8), Sum(Decimal(2.8), Decimal(2.0)).simplify())
                 }
             }
             on("a sum of an integer and a decimal") {
                 it("should return a single decimal representing the sum") {
-                    shouldEqual(Decimal(4.8), BinarySum(Decimal(2.8), Integer(2)).simplify())
+                    shouldEqual(Decimal(4.8), Sum(Decimal(2.8), Integer(2)).simplify())
                 }
                 it("should return a single decimal representing the sum when the order is reversed") {
-                    shouldEqual(Decimal(4.8), BinarySum(Integer(2), Decimal(2.8)).simplify())
+                    shouldEqual(Decimal(4.8), Sum(Integer(2), Decimal(2.8)).simplify())
                 }
             }
             on("a product of integers") {

@@ -33,39 +33,49 @@ data class Decimal(val value: Double) : Constant {
     override fun text() = value.toString()
 }
 
-interface BinaryOperator : Expression {
+interface Operator : Expression
+
+data class Negation(val expression: Expression) : Expression {
+    override fun text() = "-${expression.text()}"
+}
+
+interface BinaryOperator : Operator {
     fun token() : Token.BinaryOperator
 
     companion object {
         fun fromToken(token: Token.BinaryOperator, left: Expression, right: Expression) = when(token) {
-            is Token.BinaryOperator.Plus -> BinarySum(left, right)
+            is Token.BinaryOperator.Plus -> Sum(left, right)
             is Token.BinaryOperator.Times -> BinaryProduct(left, right)
-            is Token.BinaryOperator.Minus -> BinarySum(left, BinaryProduct(Integer(-1), right))
+            is Token.BinaryOperator.Minus -> Sum(left, Negation(right))
             is Token.BinaryOperator.Division -> Division(left, right)
         }
     }
 }
 
-data class BinarySum(val left: Expression, val right: Expression) : BinaryOperator {
-    override fun text() = when {
-        right is BinaryProduct && right.left is Integer && right.left.value == -1 ->
-            left.text() + " - " + right.right.text()
-        right is Integer && right.value < 0 -> left.text() + " - " + (-1 * right.value)
-        else -> applyParentheses(this, left, right)
-    }
+data class Sum(val terms: Iterable<Expression>) : BinaryOperator {
+    constructor(vararg terms: Expression) : this(terms.asList())
 
     override fun token() = Token.BinaryOperator.Plus
-    override fun simplify(): Expression =
-            when {
-                left is Integer && right is Integer -> Integer(left.value + right.value)
-                left is Decimal && right is Decimal -> Decimal(left.value + right.value)
-                left is Decimal && right is Integer -> Decimal(left.value + right.value)
-                left is Integer && right is Decimal -> Decimal(left.value + right.value)
-                else -> {
-                    val simplified = BinarySum(left.simplify(), right.simplify())
-                    if (simplified != this) simplified.simplify() else simplified
-                }
+    override fun text() = terms.firstOrNull()?.text() + terms.drop(1).map {
+        when {
+            it is Negation -> " - ${it.expression.text()}"
+            it is Integer && it.value < 0 -> " - " + Integer(-1 * it.value).text()
+            else -> " + ${it.text()}"
+        }
+    }.reduce { a, b -> a + b }
+
+    override fun simplify(): Expression = terms.reduce { left, right ->
+        when {
+            left is Integer && right is Integer -> Integer(left.value+right.value)
+            left is Decimal && right is Decimal -> Decimal(left.value+right.value)
+            left is Decimal && right is Integer -> Decimal(left.value+right.value)
+            left is Integer && right is Decimal -> Decimal(left.value+right.value)
+            else -> {
+                val simplified = Sum(left.simplify(), right.simplify())
+                if (simplified != this) simplified.simplify() else simplified
             }
+        }
+    }
 }
 
 data class BinaryProduct(val left: Expression, val right: Expression) : BinaryOperator {
@@ -126,6 +136,6 @@ fun applyUnaryOperator(token: Token.UnaryOperator, operand: Expression) = when(t
     is Token.UnaryOperator.Minus -> when(operand) {
         is Integer -> Integer(-1 * operand.value)
         is Decimal -> Decimal(-1 * operand.value)
-        else -> BinaryProduct(Integer(-1), operand)
+        else -> Negation(operand)
     }
 }
