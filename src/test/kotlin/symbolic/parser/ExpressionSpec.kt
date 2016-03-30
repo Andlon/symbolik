@@ -25,7 +25,7 @@ class ExpressionSpec : Spek() {
             }
             on("a product of an integer and a variable") {
                 it("should equal the product") {
-                    shouldEqual("5 * x", BinaryProduct(Integer(5), x).text())
+                    shouldEqual("5 * x", Product(Integer(5), x).text())
                 }
             }
             on("a sum of an integer and a variable") {
@@ -50,7 +50,7 @@ class ExpressionSpec : Spek() {
             }
             on("an expression that requires parentheses for grouping") {
                 it("should correctly apply the parentheses") {
-                    shouldEqual("(x - 2) * 2", BinaryProduct(Sum(x, Integer(-2)), Integer(2)).text())
+                    shouldEqual("(x - 2) * 2", Product(Sum(x, Integer(-2)), Integer(2)).text())
                 }
             }
         }
@@ -77,20 +77,20 @@ class ExpressionSpec : Spek() {
             }
             on("a product of integers") {
                 it("should return a single integer representing the product") {
-                    shouldEqual(Integer(4), BinaryProduct(Integer(2), Integer(2)).simplify())
+                    shouldEqual(Integer(4), Product(Integer(2), Integer(2)).simplify())
                 }
             }
             on("a product of decimals") {
                 it("should return a single decimal representing the product") {
-                    shouldEqual(Decimal(4.8), BinaryProduct(Decimal(2.4), Decimal(2.0)).simplify())
+                    shouldEqual(Decimal(4.8), Product(Decimal(2.4), Decimal(2.0)).simplify())
                 }
             }
             on("a product of an integer and a decimal") {
                 it("should return a single decimal representing the product") {
-                    shouldEqual(Decimal(4.8), BinaryProduct(Decimal(2.4), Integer(2)).simplify())
+                    shouldEqual(Decimal(4.8), Product(Decimal(2.4), Integer(2)).simplify())
                 }
                 it("should return a single decimal representing the product when the order is reversed") {
-                    shouldEqual(Decimal(4.8), BinaryProduct(Integer(2), Decimal(2.4)).simplify())
+                    shouldEqual(Decimal(4.8), Product(Integer(2), Decimal(2.4)).simplify())
                 }
             }
             on("a decimal divided by a non-zero integer") {
@@ -115,8 +115,8 @@ class ExpressionSpec : Spek() {
             }
             on("a product of integers multiplied by a variable") {
                 it("should multiply the integers and multiply with the variable") {
-                    val expr = BinaryProduct(BinaryProduct(Integer(2), Integer(2)), x)
-                    shouldEqual(BinaryProduct(Integer(4), x), expr.simplify())
+                    val expr = Product(Product(Integer(2), Integer(2)), x)
+                    shouldEqual(Product(Integer(4), x), expr.simplify())
                 }
             }
         }

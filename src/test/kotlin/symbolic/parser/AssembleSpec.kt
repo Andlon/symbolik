@@ -83,7 +83,7 @@ class AssembleSpec : Spek() {
             }
             on("two integers multiplied together") {
                 it("should return a BinaryProduct consisting of the two integers") {
-                    shouldEqual(BinaryProduct(Integer(1), Integer(2)), assemble(tokenize("1*2")))
+                    shouldEqual(Product(Integer(1), Integer(2)), assemble(tokenize("1*2")))
                 }
             }
             on("an integer subtracted from another") {
@@ -107,7 +107,7 @@ class AssembleSpec : Spek() {
             }
             on("two variables multiplied together") {
                 it("should return a BinaryProduct consisting of the two variables") {
-                    shouldEqual(BinaryProduct(x, y), assemble(tokenize("x*y")))
+                    shouldEqual(Product(x, y), assemble(tokenize("x*y")))
                 }
             }
             on("a variable subtracted from another") {
@@ -128,7 +128,7 @@ class AssembleSpec : Spek() {
             }
             on("a variable and an integer multiplied together") {
                 it("should return a BinaryProduct of the two") {
-                    shouldEqual(BinaryProduct(x, Integer(1)), assemble(tokenize("x*1")))
+                    shouldEqual(Product(x, Integer(1)), assemble(tokenize("x*1")))
                 }
             }
             on("an integer subtracted from a variable") {
@@ -151,14 +151,14 @@ class AssembleSpec : Spek() {
             on("nested binary operators of different precedence") {
                 it("should return the expected composite expressions") {
                     val tokens = tokenize("x * y + 3 * z")
-                    val expected = Sum(BinaryProduct(x, y), BinaryProduct(Integer(3), z))
+                    val expected = Sum(Product(x, y), Product(Integer(3), z))
                     shouldEqual(expected, assemble(tokens))
                 }
             }
             on("taking the difference of two products") {
                 it("should return the expected composite expressions") {
                     val tokens = tokenize("x * y - 3 * z")
-                    val expected = Sum(BinaryProduct(x, y), Negation(BinaryProduct(Integer(3), z)))
+                    val expected = Sum(Product(x, y), Negation(Product(Integer(3), z)))
                     shouldEqual(expected, assemble(tokens))
                 }
             }
@@ -179,7 +179,7 @@ class AssembleSpec : Spek() {
             }
             on("an expression where parentheses are used to counter natural precedence") {
                 var tokens = tokenize("(x + y) * (z + 1)")
-                var expected = BinaryProduct(Sum(x, y), Sum(z, Integer(1)))
+                var expected = Product(Sum(x, y), Sum(z, Integer(1)))
                 it("should take parentheses into account and give the expected composite expression") {
                     shouldEqual(expected, assemble(tokens))
                 }
