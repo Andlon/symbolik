@@ -53,6 +53,14 @@ data class BinarySum(val left: Expression, val right: Expression) : BinaryOperat
     }
 
     override fun token() = Token.BinaryOperator.Plus
+    override fun simplify() =
+            when {
+                left is Integer && right is Integer -> Integer(left.value + right.value)
+                left is Decimal && right is Decimal -> Decimal(left.value + right.value)
+                left is Decimal && right is Integer -> Decimal(left.value + right.value)
+                left is Integer && right is Decimal -> Decimal(left.value + right.value)
+                else -> this
+            }
 }
 
 data class BinaryProduct(val left: Expression, val right: Expression) : BinaryOperator {
@@ -61,12 +69,29 @@ data class BinaryProduct(val left: Expression, val right: Expression) : BinaryOp
         else -> applyParentheses(this, left, right)
     }
 
+    override fun simplify() =
+            when {
+                left is Integer && right is Integer -> Integer(left.value * right.value)
+                left is Decimal && right is Decimal -> Decimal(left.value * right.value)
+                left is Decimal && right is Integer -> Decimal(left.value * right.value)
+                left is Integer && right is Decimal -> Decimal(left.value * right.value)
+                else -> this
+            }
+
     override fun token() = Token.BinaryOperator.Times
 }
 
 data class Division(val left: Expression, val right: Expression) : BinaryOperator {
     override fun text() = applyParentheses(this, left, right)
     override fun token() = Token.BinaryOperator.Division
+
+    override fun simplify() = when {
+        //TODO: Figure out if numbers are divisible left is Integer && right is Integer && right != Integer(0) -> Integer(left.value / right.value)
+        left is Decimal && right is Decimal && right != Decimal(0.0) -> Decimal(left.value / right.value)
+        left is Decimal && right is Integer && right != Integer(0) -> Decimal(left.value / right.value)
+        left is Integer && right is Decimal && right != Decimal(0.0) -> Decimal(left.value / right.value)
+        else -> this
+    }
 }
 
 private fun applyParentheses(operator: BinaryOperator, left: Expression, right: Expression): String {

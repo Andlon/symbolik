@@ -54,5 +54,64 @@ class ExpressionSpec : Spek() {
                 }
             }
         }
+
+        given("simplification of expressions") {
+            on("a sum of integers") {
+                it("should return a single integer representing the sum") {
+                    shouldEqual(Integer(4), BinarySum(Integer(2), Integer(2)).simplify())
+                }
+            }
+            on("a sum of decimals") {
+                it("should return a single decimal representing the sum") {
+                    shouldEqual(Decimal(4.8), BinarySum(Decimal(2.8), Decimal(2.0)).simplify())
+                }
+            }
+            on("a sum of an integer and a decimal") {
+                it("should return a single decimal representing the sum") {
+                    shouldEqual(Decimal(4.8), BinarySum(Decimal(2.8), Integer(2)).simplify())
+                }
+                it("should return a single decimal representing the sum when the order is reversed") {
+                    shouldEqual(Decimal(4.8), BinarySum(Integer(2), Decimal(2.8)).simplify())
+                }
+            }
+            on("a product of integers") {
+                it("should return a single integer representing the product") {
+                    shouldEqual(Integer(4), BinaryProduct(Integer(2), Integer(2)).simplify())
+                }
+            }
+            on("a product of decimals") {
+                it("should return a single decimal representing the product") {
+                    shouldEqual(Decimal(4.8), BinaryProduct(Decimal(2.4), Decimal(2.0)).simplify())
+                }
+            }
+            on("a product of an integer and a decimal") {
+                it("should return a single decimal representing the product") {
+                    shouldEqual(Decimal(4.8), BinaryProduct(Decimal(2.4), Integer(2)).simplify())
+                }
+                it("should return a single decimal representing the product when the order is reversed") {
+                    shouldEqual(Decimal(4.8), BinaryProduct(Integer(2), Decimal(2.4)).simplify())
+                }
+            }
+            on("a decimal divided by a non-zero integer") {
+                it("should return a single decimal representing the division") {
+                    shouldEqual(Decimal(2.4), Division(Decimal(4.8), Integer(2)).simplify())
+                }
+            }
+            on("a decimal divided by a non-zero decimal") {
+                it("should return a single decimal representing the division") {
+                    shouldEqual(Decimal(2.4), Division(Decimal(4.8), Decimal(2.0)).simplify())
+                }
+            }
+            on("an integer A divided by an integer B") {
+                it("should return the unchanged expression if A is not divisible by B") {
+                    val expr = Division(Integer(3), Integer(2))
+                    shouldEqual(expr, expr.simplify())
+                }
+                it("should return a single integer if A is divisible by B") {
+                    val expr = Division(Integer(4), Integer(2))
+                    shouldEqual(Integer(2), expr.simplify())
+                }
+            }
+        }
     }
 }
