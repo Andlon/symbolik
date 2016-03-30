@@ -25,8 +25,10 @@ class App {
     private fun handleInput(input: String) {
         try {
             val expr = assemble(tokenize(input))
-            printLine("Input:      " + expr.text())
-            printLine("Simplified: " + expr.simplify().text())
+            printLine("Input:                 " + expr.text())
+            printLine("Simplified:            " + expr.simplify().text())
+            printLine("With types:            " + expr.toString())
+            printLine("Simplified with types: " + expr.simplify().toString())
         } catch (e: TokenizationException) {
             printError("Problem parsing the input: " + e.message)
         } catch (e: MismatchedParenthesisException) {

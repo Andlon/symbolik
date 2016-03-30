@@ -2,6 +2,7 @@ package symbolic.expressions
 
 import symbolic.parser.Token
 import symbolic.util.isDivisible
+import java.util.*
 
 object EmptyExpression : Expression {
     override fun text() = ""
@@ -43,8 +44,18 @@ data class Negation(val expression: Expression) : Expression {
 interface BinaryOperator : Operator {
     companion object {
         fun fromToken(token: Token.BinaryOperator, left: Expression, right: Expression) = when(token) {
-            is Token.BinaryOperator.Plus -> Sum(left, right)
-            is Token.BinaryOperator.Times -> Product(left, right)
+            is Token.BinaryOperator.Plus -> when {
+                left is Sum && right is Sum -> Sum(left.terms + right.terms)
+                left is Sum -> Sum(left.terms + right)
+                right is Sum -> Sum(listOf(left) + right.terms)
+                else -> Sum(left, right)
+            }
+            is Token.BinaryOperator.Times -> when {
+                left is Product && right is Product -> Product(left.terms + right.terms)
+                left is Product -> Product(left.terms + right)
+                right is Product -> Product(listOf(left) + right.terms)
+                else -> Product(left, right)
+            }
             is Token.BinaryOperator.Minus -> Sum(left, Negation(right))
             is Token.BinaryOperator.Division -> Division(left, right)
         }
@@ -73,18 +84,20 @@ data class Sum(val terms: Iterable<Expression>) : BinaryOperator {
         return (firstTerm + remainingTerms).reduce { a, b -> a + b }
     }
 
-    override fun simplify(): Expression = terms.reduce { left, right ->
-        when {
-            left is Integer && right is Integer -> Integer(left.value+right.value)
-            left is Decimal && right is Decimal -> Decimal(left.value+right.value)
-            left is Decimal && right is Integer -> Decimal(left.value+right.value)
-            left is Integer && right is Decimal -> Decimal(left.value+right.value)
-            else -> {
-                val simplified = Sum(left.simplify(), right.simplify())
-                if (simplified != this) simplified.simplify() else simplified
+    override fun simplify(): Expression = terms
+            .sortedWith(ExpressionTypeComparator)
+            .reduce { left, right ->
+                when {
+                    left is Integer && right is Integer -> Integer(left.value+right.value)
+                    left is Decimal && right is Decimal -> Decimal(left.value+right.value)
+                    left is Decimal && right is Integer -> Decimal(left.value+right.value)
+                    left is Integer && right is Decimal -> Decimal(left.value+right.value)
+                    else -> {
+                        val simplified = Sum(left.simplify(), right.simplify())
+                        if (simplified != this) simplified.simplify() else simplified
+                    }
+                }
             }
-        }
-    }
 }
 
 data class Product(val terms: Iterable<Expression>) : BinaryOperator {
@@ -96,18 +109,22 @@ data class Product(val terms: Iterable<Expression>) : BinaryOperator {
             .map(Expression::text)
             .reduce { a, b -> "$a * $b" }
 
-    override fun simplify(): Expression = terms.reduce { left, right ->
-        when {
-            left is Integer && right is Integer -> Integer(left.value * right.value)
-            left is Decimal && right is Decimal -> Decimal(left.value * right.value)
-            left is Decimal && right is Integer -> Decimal(left.value * right.value)
-            left is Integer && right is Decimal -> Decimal(left.value * right.value)
-            else -> {
-                val simplified = Product(left.simplify(), right.simplify())
-                if (simplified != this) simplified.simplify() else simplified
+    override fun simplify(): Expression = terms
+            .sortedWith(ExpressionTypeComparator)
+            .reduce { left, right ->
+                when {
+                    left is Integer && right is Integer -> Integer(left.value * right.value)
+                    left is Decimal && right is Decimal -> Decimal(left.value * right.value)
+                    left is Decimal && right is Integer -> Decimal(left.value * right.value)
+                    left is Integer && right is Decimal -> Decimal(left.value * right.value)
+                    else -> {
+                        val simplified = Product(left.simplify(), right.simplify())
+                        if (simplified != this) simplified.simplify() else simplified
+                    }
+                }
             }
-        }
-    }
+
+    fun withSortedTerms() = Product(this.terms.sortedWith(ExpressionTypeComparator))
 }
 
 data class Division(val left: Expression, val right: Expression) : BinaryOperator {
@@ -133,6 +150,18 @@ data class Division(val left: Expression, val right: Expression) : BinaryOperato
 
 data class Parentheses(val expr: Expression) : Expression {
     override fun text() = "(${expr.text()})"
+}
+
+object ExpressionTypeComparator : Comparator<Expression> {
+    override fun compare(a: Expression, b: Expression) = when {
+        a is Integer -> -1
+        b is Integer -> 1
+        a is Constant -> -1
+        b is Constant -> 1
+        a is Variable -> -1
+        b is Variable -> 1
+        else -> 0
+    }
 }
 
 private fun applyParentheses(parentOperator: Operator) = { expr: Expression -> when {

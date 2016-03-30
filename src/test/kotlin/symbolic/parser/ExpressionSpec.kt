@@ -119,6 +119,26 @@ class ExpressionSpec : Spek() {
                     shouldEqual(Product(Integer(4), x), expr.simplify())
                 }
             }
+            on("integers added to a variable on both sides") {
+                it("should sum the integers together") {
+                    val expr = Sum(Integer(2), x, Integer(2))
+                    shouldEqual(Sum(Integer(4), x), expr.simplify())
+                }
+            }
+            on("a variable multiplied by an integer on both sides") {
+                it("should multiply the integers together") {
+                    val expr = Product(Integer(2), x, Integer(2))
+                    shouldEqual(Product(Integer(4), x), expr.simplify())
+                }
+            }
+            on("a product of several integers followed by a variable followed by several integers") {
+                it("should multiply the integers together") {
+                    val expr = Product(Integer(2), Integer(3), Integer(4), x, Integer(5), Integer(6))
+                    shouldEqual(Product(Integer(720), x), expr.simplify())
+                }
+            }
+
+
         }
     }
 }
