@@ -9,3 +9,5 @@ tailrec fun gcd(a: Int, b: Int): Int = when {
     abs(a) == abs(b) -> abs(a)
     else -> gcd(abs(b - a), min(a, b))
 }
+
+fun isDivisible(a: Int, b: Int) = gcd(a, b) == b

@@ -1,6 +1,8 @@
 package symbolic.expressions
 
 import symbolic.parser.Token
+import symbolic.util.gcd
+import symbolic.util.isDivisible
 
 object EmptyExpression : Expression {
     override fun text() = ""
@@ -92,7 +94,8 @@ data class Division(val left: Expression, val right: Expression) : BinaryOperato
     override fun token() = Token.BinaryOperator.Division
 
     override fun simplify(): Expression = when {
-        //TODO: Figure out if numbers are divisible left is Integer && right is Integer && right != Integer(0) -> Integer(left.value / right.value)
+        left is Integer && right is Integer && right != Integer(0) && isDivisible(left.value, right.value) ->
+            Integer(left.value / right.value)
         left is Decimal && right is Decimal && right != Decimal(0.0) -> Decimal(left.value / right.value)
         left is Decimal && right is Integer && right != Integer(0) -> Decimal(left.value / right.value)
         left is Integer && right is Decimal && right != Decimal(0.0) -> Decimal(left.value / right.value)
