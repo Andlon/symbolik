@@ -86,18 +86,20 @@ data class Sum(val terms: Iterable<Expression>) : BinaryOperator {
 
     override fun simplify(): Expression = terms
             .sortedWith(ExpressionTypeComparator)
-            .reduce { left, right ->
+            .fold<Expression, Expression>(EmptyExpression, { accumulated, term ->
                 when {
-                    left is Integer && right is Integer -> Integer(left.value+right.value)
-                    left is Decimal && right is Decimal -> Decimal(left.value+right.value)
-                    left is Decimal && right is Integer -> Decimal(left.value+right.value)
-                    left is Integer && right is Decimal -> Decimal(left.value+right.value)
-                    else -> {
-                        val simplified = Sum(left.simplify(), right.simplify())
-                        if (simplified != this) simplified.simplify() else simplified
-                    }
+                    accumulated is EmptyExpression -> term.simplify()
+                    accumulated is Integer && term is Integer -> Integer(accumulated.value + term.value)
+                    accumulated is Decimal && term is Decimal -> Decimal(accumulated.value + term.value)
+                    accumulated is Decimal && term is Integer -> Decimal(accumulated.value + term.value)
+                    accumulated is Integer && term is Decimal -> Decimal(accumulated.value + term.value)
+                    accumulated is Sum && term is Sum -> Sum(accumulated.terms + term.terms)
+                    accumulated is Sum -> Sum(accumulated.terms + term.simplify()).withSortedTerms()
+                    else -> Sum(accumulated, term.simplify()).withSortedTerms()
                 }
-            }
+            })
+
+    fun withSortedTerms() = Sum(this.terms.sortedWith(ExpressionTypeComparator))
 }
 
 data class Product(val terms: Iterable<Expression>) : BinaryOperator {
@@ -111,18 +113,18 @@ data class Product(val terms: Iterable<Expression>) : BinaryOperator {
 
     override fun simplify(): Expression = terms
             .sortedWith(ExpressionTypeComparator)
-            .reduce { left, right ->
+            .fold<Expression, Expression>(EmptyExpression, { accumulated, term ->
                 when {
-                    left is Integer && right is Integer -> Integer(left.value * right.value)
-                    left is Decimal && right is Decimal -> Decimal(left.value * right.value)
-                    left is Decimal && right is Integer -> Decimal(left.value * right.value)
-                    left is Integer && right is Decimal -> Decimal(left.value * right.value)
-                    else -> {
-                        val simplified = Product(left.simplify(), right.simplify())
-                        if (simplified != this) simplified.simplify() else simplified
-                    }
+                    accumulated is EmptyExpression -> term.simplify()
+                    accumulated is Integer && term is Integer -> Integer(accumulated.value * term.value)
+                    accumulated is Decimal && term is Decimal -> Decimal(accumulated.value * term.value)
+                    accumulated is Decimal && term is Integer -> Decimal(accumulated.value * term.value)
+                    accumulated is Integer && term is Decimal -> Decimal(accumulated.value * term.value)
+                    accumulated is Product && term is Product -> Product(accumulated.terms + term.terms)
+                    accumulated is Product -> Product(accumulated.terms + term.simplify()).withSortedTerms()
+                    else -> Product(accumulated, term.simplify()).withSortedTerms()
                 }
-            }
+            })
 
     fun withSortedTerms() = Product(this.terms.sortedWith(ExpressionTypeComparator))
 }
