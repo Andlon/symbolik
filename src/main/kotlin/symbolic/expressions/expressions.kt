@@ -9,6 +9,8 @@ object EmptyExpression : Expression {
 }
 
 interface Constant : Expression {
+    fun decimalValue(): Decimal
+
     companion object {
         fun fromToken(token: Token.Constant) = when(token) {
             is Token.Integer -> Integer(token.value)
@@ -16,6 +18,22 @@ interface Constant : Expression {
             else -> throw Exception("Unsupported Constant token")
         }
     }
+}
+
+operator fun Expression.plus(other: Expression) = when {
+    this is Integer && other is Integer -> Integer(this.value + other.value)
+    this is Constant && other is Constant -> Decimal(this.decimalValue().value + other.decimalValue().value)
+    this is EmptyExpression -> other
+    other is EmptyExpression -> this
+    else -> Sum(this, other)
+}
+
+operator fun Expression.times(other: Expression) = when {
+    this is Integer && other is Integer -> Integer(this.value * other.value)
+    this is Constant && other is Constant -> Decimal(this.decimalValue().value * other.decimalValue().value)
+    this is EmptyExpression -> other
+    other is EmptyExpression -> this
+    else -> Product(this, other)
 }
 
 data class Variable(val value: String) : Expression {
@@ -28,9 +46,11 @@ data class Variable(val value: String) : Expression {
 
 data class Integer(val value: Int) : Constant {
     override fun text() = value.toString()
+    override fun decimalValue() = Decimal(value.toDouble())
 }
 data class Decimal(val value: Double) : Constant {
     override fun text() = value.toString()
+    override fun decimalValue() = this
 }
 
 interface Operator : Expression {
@@ -43,7 +63,7 @@ data class Negation(val expression: Expression) : Expression {
 
 interface BinaryOperator : Operator {
     companion object {
-        fun fromToken(token: Token.BinaryOperator, left: Expression, right: Expression) = when(token) {
+        fun fromToken(token: Token.BinaryOperator, left: Expression, right: Expression) = when (token) {
             is Token.BinaryOperator.Plus -> when {
                 left is Sum && right is Sum -> Sum(left.terms + right.terms)
                 left is Sum -> Sum(left.terms + right)
@@ -62,7 +82,11 @@ interface BinaryOperator : Operator {
     }
 }
 
-data class Sum(val terms: Iterable<Expression>) : BinaryOperator {
+interface SuperBinaryOperator : BinaryOperator {
+    val terms: Iterable<Expression>
+}
+
+data class Sum(override val terms: Iterable<Expression>) : SuperBinaryOperator {
     constructor(vararg terms: Expression) : this(terms.asList())
 
     override fun token() = Token.BinaryOperator.Plus
@@ -79,23 +103,15 @@ data class Sum(val terms: Iterable<Expression>) : BinaryOperator {
 
     override fun simplify(): Expression = terms
             .map { it.simplify() }
-            .sortedWith(ExpressionTypeComparator)
-            .fold<Expression, Expression>(EmptyExpression, { accumulated, term ->
-                when {
-                    accumulated is EmptyExpression -> term
-                    accumulated is Integer && term is Integer -> Integer(accumulated.value + term.value)
-                    accumulated is Decimal && term is Decimal -> Decimal(accumulated.value + term.value)
-                    accumulated is Decimal && term is Integer -> Decimal(accumulated.value + term.value)
-                    accumulated is Integer && term is Decimal -> Decimal(accumulated.value + term.value)
-                    accumulated is Sum && term is Sum -> Sum(accumulated.terms + term.terms)
-                    accumulated is Sum -> Sum(accumulated.terms + term)
-                    term is Sum -> Sum(listOf(accumulated) + term.terms)
-                    else -> Sum(accumulated, term)
-                }
-            })
+            .flatMap { if (it is Sum) it.terms else listOf(it) }
+            .partition { it is Constant }
+            .let {
+                val factor = it.first.fold(EmptyExpression as Expression, { a, b -> a + b })
+                return sum(listOf(factor) + it.second)
+            }
 }
 
-data class Product(val terms: Iterable<Expression>) : BinaryOperator {
+data class Product(override val terms: List<Expression>) : SuperBinaryOperator {
     constructor(vararg terms: Expression) : this(terms.asList())
 
     override fun token() = Token.BinaryOperator.Times
@@ -106,20 +122,12 @@ data class Product(val terms: Iterable<Expression>) : BinaryOperator {
 
     override fun simplify(): Expression = terms
             .map { it.simplify() }
-            .sortedWith(ExpressionTypeComparator)
-            .fold<Expression, Expression>(EmptyExpression, { accumulated, term ->
-                when {
-                    accumulated is EmptyExpression -> term
-                    accumulated is Integer && term is Integer -> Integer(accumulated.value * term.value)
-                    accumulated is Decimal && term is Decimal -> Decimal(accumulated.value * term.value)
-                    accumulated is Decimal && term is Integer -> Decimal(accumulated.value * term.value)
-                    accumulated is Integer && term is Decimal -> Decimal(accumulated.value * term.value)
-                    accumulated is Product && term is Product -> Product(accumulated.terms + term.terms)
-                    accumulated is Product -> Product(accumulated.terms + term)
-                    term is Product -> Product(listOf(accumulated) + term.terms)
-                    else -> Product(accumulated, term)
-                }
-            })
+            .flatMap { if (it is Product) it.terms else listOf(it) }
+            .partition { it is Constant }
+            .let {
+                val factor = it.first.fold(EmptyExpression as Expression, { a, b -> a * b })
+                return product(listOf(factor) + it.second)
+            }
 }
 
 data class Division(val left: Expression, val right: Expression) : BinaryOperator {
@@ -158,6 +166,22 @@ object ExpressionTypeComparator : Comparator<Expression> {
         else -> 0
     }
 }
+
+fun product(terms: Iterable<Expression>): Expression = terms
+        .filterNot { it is EmptyExpression }
+        .let { when (it.size) {
+            0 -> EmptyExpression
+            1 -> it.single()
+            else -> Product(it)
+        }}
+
+fun sum(terms: Iterable<Expression>): Expression = terms
+        .filterNot { it is EmptyExpression }
+        .let { when (it.size) {
+            0 -> EmptyExpression
+            1 -> it.single()
+            else -> Sum(it)
+        }}
 
 private fun applyParenthesesIfNecessary(parentOperator: Operator) = { expr: Expression -> when {
     expr is Operator && expr.token().precedence() < parentOperator.token().precedence() -> Parentheses(expr)
