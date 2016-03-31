@@ -89,6 +89,7 @@ data class Sum(val terms: Iterable<Expression>) : BinaryOperator {
                     accumulated is Integer && term is Decimal -> Decimal(accumulated.value + term.value)
                     accumulated is Sum && term is Sum -> Sum(accumulated.terms + term.terms)
                     accumulated is Sum -> Sum(accumulated.terms + term)
+                    term is Sum -> Sum(listOf(accumulated) + term.terms)
                     else -> Sum(accumulated, term)
                 }
             })
@@ -115,6 +116,7 @@ data class Product(val terms: Iterable<Expression>) : BinaryOperator {
                     accumulated is Integer && term is Decimal -> Decimal(accumulated.value * term.value)
                     accumulated is Product && term is Product -> Product(accumulated.terms + term.terms)
                     accumulated is Product -> Product(accumulated.terms + term)
+                    term is Product -> Product(listOf(accumulated) + term.terms)
                     else -> Product(accumulated, term)
                 }
             })
