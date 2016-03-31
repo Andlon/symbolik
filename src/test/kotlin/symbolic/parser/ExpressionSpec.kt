@@ -177,6 +177,20 @@ class ExpressionSpec : Spek() {
                     shouldEqual(expr2, expr2.simplify())
                 }
             }
+            on("collectible terms in a Sum expression") {
+                it("should collect the terms for positive coefficients") {
+                    val expr = Sum(Product(Integer(2), x), Product(Integer(3), x))
+                    shouldEqual(Product(Integer(5), x), expr.simplify())
+                }
+                it("should collect the terms for negative coefficients") {
+                    val expr = Sum(Product(Integer(-2), x), Product(Integer(-5), x))
+                    shouldEqual(Product(Integer(-7), x), expr.simplify())
+                }
+                it("should collect the terms for negated coefficients") {
+                    val expr = Sum(Product(Integer(-2), x), Negation(Product(Integer(5), x)))
+                    shouldEqual(Product(Integer(-7), x), expr.simplify())
+                }
+            }
         }
     }
 }

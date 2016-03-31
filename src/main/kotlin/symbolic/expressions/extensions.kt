@@ -26,6 +26,7 @@ fun Expression.text(): String = when(this) {
     is Variable -> this.value
     is Negation -> "-${this.expression.text()}"
     is Parentheses -> "(${this.expr.text()})"
+    is ConstantCoefficientTerm -> product(listOf(this.coeff, this.term)).text()
     is Sum -> terms
             .map(applyParenthesesIfNecessary(this))
             .fold("", { accumulated, term ->
@@ -49,13 +50,17 @@ fun Expression.text(): String = when(this) {
 
 fun Expression.simplify(): Expression = when(this) {
     is Negation -> if (this.expression is Constant) { Integer(-1) * this.expression } else { this }
+    is ConstantCoefficientTerm -> ConstantCoefficientTerm(this.coeff, this.term.simplify())
     is Sum -> terms
             .map { it.simplify() }
             .flatMap { if (it is Sum) it.terms else listOf(it) }
             .partition { it is Constant }
             .let {
                 val factor = it.first.fold(EmptyExpression as Expression, { a, b -> a + b })
-                return sum(listOf(factor) + it.second)
+                sum(listOf(factor) + it.second)
+            }
+            .let {
+                if (it is Sum) { it.collectTerms() } else { it }
             }
     is Product -> terms
             .map { it.simplify() }
@@ -63,7 +68,7 @@ fun Expression.simplify(): Expression = when(this) {
             .partition { it is Constant }
             .let {
                 val factor = it.first.fold(EmptyExpression as Expression, { a, b -> a * b })
-                return product(listOf(factor) + it.second)
+                product(listOf(factor) + it.second)
             }
     is Division -> when {
         left is Integer && right is Integer && right != Integer(0) && isDivisible(left.value, right.value) ->
@@ -77,6 +82,48 @@ fun Expression.simplify(): Expression = when(this) {
         }
     }
     else -> this
+}
+
+private fun makeConstantCoefficientTerm(e: Expression): Expression = when {
+        e is Product && e.terms.size > 1 -> {
+            val coeff = e.terms.first()
+            if (coeff is Constant) { ConstantCoefficientTerm(coeff, product(e.terms.drop(1))) } else { e }
+        }
+        e is Negation -> {
+            val c = makeConstantCoefficientTerm(e.expression)
+            if (c is ConstantCoefficientTerm) {
+                val coeff = (c.coeff * Integer(-1)) as Constant
+                ConstantCoefficientTerm(coeff, c.term)
+            } else {
+                e
+            }
+        }
+        else -> e
+}
+
+private fun reduceConstantCoefficientTermToProduct(e: Expression) =
+        if (e is ConstantCoefficientTerm) { Product(e.coeff, e.term).simplify() } else { e }
+
+fun Sum.collectTerms(): Expression {
+    val collectedTerms = terms
+            .map(::makeConstantCoefficientTerm)
+            .let {
+                val coefficientTable = mutableMapOf<Expression, Constant>()
+                val (ccterms, remainingTerms) = it.partition { it is ConstantCoefficientTerm }
+
+                ccterms
+                    .forEach {
+                        it as ConstantCoefficientTerm
+                        val currentCoefficient = coefficientTable.getOrElse(it.term, { Integer(0) })
+                        val newCoefficient = currentCoefficient + it.coeff
+                        coefficientTable.put(it.term, newCoefficient as Constant)
+                    }
+
+                coefficientTable.asIterable()
+                    .map { it -> ConstantCoefficientTerm(it.value, it.key) }
+                    .plus(remainingTerms)
+            }.map(::reduceConstantCoefficientTermToProduct)
+    return sum(collectedTerms)
 }
 
 fun product(terms: Iterable<Expression>): Expression = terms

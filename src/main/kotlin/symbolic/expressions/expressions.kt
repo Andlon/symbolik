@@ -45,6 +45,7 @@ interface SuperBinaryOperator : BinaryOperator {
 
 object EmptyExpression : Expression
 data class Parentheses(val expr: Expression) : Expression
+data class ConstantCoefficientTerm(val coeff: Constant, val term: Expression): Expression
 data class Negation(val expression: Expression) : Operator {
     override fun token() = Token.UnaryOperator.Minus
 }
