@@ -191,6 +191,12 @@ class ExpressionSpec : Spek() {
                     shouldEqual(Product(Integer(-7), x), expr.simplify())
                 }
             }
+            on("collectible paranthesized terms") {
+                it("should collect the terms") {
+                    val expr = Integer(2) * (Integer(2) + x) + Integer(4) * (Integer(2) + x)
+                    shouldEqual(Integer(6) * (Integer(2) + x), expr.simplify())
+                }
+            }
         }
     }
 }

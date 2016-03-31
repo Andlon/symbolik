@@ -92,6 +92,15 @@ class TokenizeSpec : Spek() {
                 }
             }
 
+            on("expressions that have previously failed") {
+                it("should yield the expected tokenization") {
+                    val expected = listOf(Token.LeftParenthesis, Token.Integer(2), Token.BinaryOperator.Plus,
+                            Token.Name("x"), Token.RightParenthesis, Token.BinaryOperator.Plus, Token.Integer(2))
+                    shouldEqual(expected, tokenize("(2 + x) + 2"))
+                }
+            }
+
+
         }
 
     }

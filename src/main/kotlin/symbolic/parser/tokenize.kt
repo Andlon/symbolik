@@ -30,6 +30,7 @@ private fun processUnaryOperators(tokens: List<Token>): List<Token> {
                 when (it.first) {
                     is Token.Constant -> it.second
                     is Token.Name -> it.second
+                    is Token.RightParenthesis -> it.second
                     else -> convertToUnary(it.second)
                 }
             }
