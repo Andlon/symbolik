@@ -66,40 +66,32 @@ data class Sum(val terms: Iterable<Expression>) : BinaryOperator {
     constructor(vararg terms: Expression) : this(terms.asList())
 
     override fun token() = Token.BinaryOperator.Plus
-    override fun text(): String {
-        val firstTerm = terms.take(1)
-                .map(applyParentheses(this))
-                .map(Expression::text)
-
-        val remainingTerms = terms.drop(1)
-                .map(applyParentheses(this))
-                .map {
-                    when {
-                        it is Negation -> " - ${it.expression.text()}"
-                        it is Integer && it.value < 0 -> " - " + Integer(-1 * it.value).text()
-                        else -> " + ${it.text()}"
-                    }
+    override fun text() = terms
+            .map(applyParenthesesIfNecessary(this))
+            .fold("", { accumulated, term ->
+                accumulated + when {
+                    accumulated.isEmpty() -> term.text()
+                    term is Negation -> " - ${term.expression.text()}"
+                    term is Integer && term.value < 0 -> " - " + Integer(-1 * term.value).text()
+                    else -> " + " + term.text()
                 }
-
-        return (firstTerm + remainingTerms).reduce { a, b -> a + b }
-    }
+            })
 
     override fun simplify(): Expression = terms
+            .map { it.simplify() }
             .sortedWith(ExpressionTypeComparator)
             .fold<Expression, Expression>(EmptyExpression, { accumulated, term ->
                 when {
-                    accumulated is EmptyExpression -> term.simplify()
+                    accumulated is EmptyExpression -> term
                     accumulated is Integer && term is Integer -> Integer(accumulated.value + term.value)
                     accumulated is Decimal && term is Decimal -> Decimal(accumulated.value + term.value)
                     accumulated is Decimal && term is Integer -> Decimal(accumulated.value + term.value)
                     accumulated is Integer && term is Decimal -> Decimal(accumulated.value + term.value)
                     accumulated is Sum && term is Sum -> Sum(accumulated.terms + term.terms)
-                    accumulated is Sum -> Sum(accumulated.terms + term.simplify()).withSortedTerms()
-                    else -> Sum(accumulated, term.simplify()).withSortedTerms()
+                    accumulated is Sum -> Sum(accumulated.terms + term)
+                    else -> Sum(accumulated, term)
                 }
             })
-
-    fun withSortedTerms() = Sum(this.terms.sortedWith(ExpressionTypeComparator))
 }
 
 data class Product(val terms: Iterable<Expression>) : BinaryOperator {
@@ -107,31 +99,30 @@ data class Product(val terms: Iterable<Expression>) : BinaryOperator {
 
     override fun token() = Token.BinaryOperator.Times
     override fun text() = terms
-            .map(applyParentheses(this))
+            .map(applyParenthesesIfNecessary(this))
             .map(Expression::text)
             .reduce { a, b -> "$a * $b" }
 
     override fun simplify(): Expression = terms
+            .map { it.simplify() }
             .sortedWith(ExpressionTypeComparator)
             .fold<Expression, Expression>(EmptyExpression, { accumulated, term ->
                 when {
-                    accumulated is EmptyExpression -> term.simplify()
+                    accumulated is EmptyExpression -> term
                     accumulated is Integer && term is Integer -> Integer(accumulated.value * term.value)
                     accumulated is Decimal && term is Decimal -> Decimal(accumulated.value * term.value)
                     accumulated is Decimal && term is Integer -> Decimal(accumulated.value * term.value)
                     accumulated is Integer && term is Decimal -> Decimal(accumulated.value * term.value)
                     accumulated is Product && term is Product -> Product(accumulated.terms + term.terms)
-                    accumulated is Product -> Product(accumulated.terms + term.simplify()).withSortedTerms()
-                    else -> Product(accumulated, term.simplify()).withSortedTerms()
+                    accumulated is Product -> Product(accumulated.terms + term)
+                    else -> Product(accumulated, term)
                 }
             })
-
-    fun withSortedTerms() = Product(this.terms.sortedWith(ExpressionTypeComparator))
 }
 
 data class Division(val left: Expression, val right: Expression) : BinaryOperator {
     override fun text() = listOf(left, right)
-            .map(applyParentheses(this))
+            .map(applyParenthesesIfNecessary(this))
             .map(Expression::text)
             .reduce { a, b -> "$a / $b" }
 
@@ -166,7 +157,7 @@ object ExpressionTypeComparator : Comparator<Expression> {
     }
 }
 
-private fun applyParentheses(parentOperator: Operator) = { expr: Expression -> when {
+private fun applyParenthesesIfNecessary(parentOperator: Operator) = { expr: Expression -> when {
     expr is Operator && expr.token().precedence() < parentOperator.token().precedence() -> Parentheses(expr)
     else -> expr
 }}
