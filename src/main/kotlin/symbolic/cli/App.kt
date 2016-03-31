@@ -2,6 +2,8 @@ package symbolic.cli
 
 import symbolic.expressions.EmptyExpression
 import symbolic.expressions.Expression
+import symbolic.expressions.simplify
+import symbolic.expressions.text
 import symbolic.parser.*
 import kotlin.system.measureTimeMillis
 
