@@ -1,34 +1,64 @@
 package symbolic.cli
 
+import symbolic.expressions.EmptyExpression
+import symbolic.expressions.Expression
 import symbolic.parser.*
 import kotlin.system.measureTimeMillis
 
-class App {
-    fun run(): Int {
-        printLine("")
+private data class ComputationResult(val input: Expression, val time: Long) {
+    val simplified by lazy { input.simplify() }
 
-        while (true) {
+    companion object {
+        fun fromInput(input: String): ComputationResult {
+            var expr: Expression = EmptyExpression
+            val time = measureTimeMillis { expr = assemble(tokenize(input)) }
+            return ComputationResult(expr, time)
+        }
+    }
+}
+
+class App {
+    private var debug = false
+
+    fun run(): Int {
+        var shouldContinue = true
+
+        printLine("")
+        while (shouldContinue) {
             prompt()
             val line = readLine()
-            if (line == null || line.trim().toLowerCase() == "exit") {
-                break
-            } else {
-                val time = measureTimeMillis { handleInput(line) }
-                skipLine()
-                printLine("Query completed in $time ms.")
+            val normalized = line?.trim()?.toLowerCase()
+            when {
+                line == null -> shouldContinue = false
+                normalized == "exit" -> shouldContinue = false
+                normalized == "debug" -> toggleDebug()
+                else -> handleInput(line)
             }
         }
 
         return 0
     }
 
+    private fun toggleDebug() {
+        debug = !debug
+        when (debug) {
+            true -> printLine("Debug mode enabled.")
+            false -> printLine("Debug mode disabled.")
+        }
+    }
+
     private fun handleInput(input: String) {
         try {
-            val expr = assemble(tokenize(input))
-            printLine("Input:                 " + expr.text())
-            printLine("Simplified:            " + expr.simplify().text())
-            printLine("With types:            " + expr.toString())
-            printLine("Simplified with types: " + expr.simplify().toString())
+            val result = ComputationResult.fromInput(input)
+            printLine("Input:                 " + result.input.text())
+            printLine("Simplified:            " + result.simplified.text())
+
+            if (debug) {
+                printLine("With types:            " + result.input.toString())
+                printLine("Simplified with types: " + result.simplified.toString())
+                skipLine()
+                printLine("Query completed in ${result.time} ms.")
+            }
         } catch (e: TokenizationException) {
             printError("Problem parsing the input: " + e.message)
         } catch (e: MismatchedParenthesisException) {
