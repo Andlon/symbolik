@@ -57,6 +57,7 @@ class ExpressionSpec : Spek() {
 
         given("simplification of expressions") {
             val x = Variable("x")
+            val y = Variable("y")
             on("a sum of integers") {
                 it("should return a single integer representing the sum") {
                     shouldEqual(Integer(4), Sum(Integer(2), Integer(2)).simplify())
@@ -135,6 +136,22 @@ class ExpressionSpec : Spek() {
                 it("should multiply the integers together") {
                     val expr = Product(Integer(2), Integer(3), Integer(4), x, Integer(5), Integer(6))
                     shouldEqual(Product(Integer(720), x), expr.simplify())
+                }
+            }
+            on("the product of two variables") {
+                it("should not reorder the variables") {
+                    val expr = Product(x, y)
+                    val expr2 = Product(y, x)
+                    shouldEqual(expr, expr.simplify())
+                    shouldEqual(expr2, expr2.simplify())
+                }
+            }
+            on("the sum of two variables") {
+                it("should not reorder the variables") {
+                    val expr = Sum(x, y)
+                    val expr2 = Sum(y, x)
+                    shouldEqual(expr, expr.simplify())
+                    shouldEqual(expr2, expr2.simplify())
                 }
             }
 

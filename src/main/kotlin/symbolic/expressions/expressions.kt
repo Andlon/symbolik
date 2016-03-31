@@ -147,12 +147,12 @@ data class Parentheses(val expr: Expression) : Expression {
 
 object ExpressionTypeComparator : Comparator<Expression> {
     override fun compare(a: Expression, b: Expression) = when {
-        a is Integer -> -1
-        b is Integer -> 1
-        a is Constant -> -1
-        b is Constant -> 1
-        a is Variable -> -1
-        b is Variable -> 1
+        a is Integer && b !is Variable -> -1
+        b is Integer && a !is Variable -> 1
+        a is Constant && b !is Constant -> -1
+        b is Constant && a !is Constant -> 1
+        a is Variable && b !is Variable -> -1
+        b is Variable && a !is Variable -> 1
         else -> 0
     }
 }
