@@ -39,7 +39,7 @@ interface BinaryOperator : Operator {
     }
 }
 
-interface SuperBinaryOperator : BinaryOperator {
+interface AssociativeBinaryOperator : BinaryOperator {
     val terms: Iterable<Expression>
 }
 
@@ -63,12 +63,12 @@ data class Decimal(val value: Double) : Constant {
     override fun decimalValue() = this
 }
 
-data class Sum(override val terms: Iterable<Expression>) : SuperBinaryOperator {
+data class Sum(override val terms: Iterable<Expression>) : AssociativeBinaryOperator {
     constructor(vararg terms: Expression) : this(terms.asList())
     override fun token() = Token.BinaryOperator.Plus
 }
 
-data class Product(override val terms: List<Expression>) : SuperBinaryOperator {
+data class Product(override val terms: List<Expression>) : AssociativeBinaryOperator {
     constructor(vararg terms: Expression) : this(terms.asList())
     override fun token() = Token.BinaryOperator.Times
 }

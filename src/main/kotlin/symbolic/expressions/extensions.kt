@@ -48,28 +48,28 @@ fun Expression.text(): String = when(this) {
     else -> ""
 }
 
+fun Sum.flatten(): Sum = Sum(terms.flatMap { if (it is Sum) it.terms else listOf(it) })
+fun Product.flatten(): Product = Product(terms.flatMap { if (it is Product) it.terms else listOf(it) })
+
+private fun List<Expression>.combineConstants(combiner: (Expression, Expression) -> Expression,
+                                      initializer: (List<Expression>) -> Expression): Expression {
+    val (constants, remaining) = this.partition { it is Constant }
+    val factor = constants.fold(EmptyExpression as Expression, combiner)
+    return initializer(listOf(factor) + remaining)
+}
+
 fun Expression.simplify(): Expression = when(this) {
     is Negation -> if (this.expression is Constant) { Integer(-1) * this.expression } else { this }
     is ConstantCoefficientTerm -> ConstantCoefficientTerm(this.coeff, this.term.simplify())
-    is Sum -> terms
+    is Sum -> this.flatten().terms
             .map { it.simplify() }
-            .flatMap { if (it is Sum) it.terms else listOf(it) }
-            .partition { it is Constant }
-            .let {
-                val factor = it.first.fold(EmptyExpression as Expression, { a, b -> a + b })
-                sum(listOf(factor) + it.second)
-            }
+            .combineConstants(Expression::plus, ::sum)
             .let {
                 if (it is Sum) { it.collectTerms() } else { it }
             }
-    is Product -> terms
+    is Product -> this.flatten().terms
             .map { it.simplify() }
-            .flatMap { if (it is Product) it.terms else listOf(it) }
-            .partition { it is Constant }
-            .let {
-                val factor = it.first.fold(EmptyExpression as Expression, { a, b -> a * b })
-                product(listOf(factor) + it.second)
-            }
+            .combineConstants(Expression::times, ::product)
     is Division -> when {
         left is Integer && right is Integer && right != Integer(0) && isDivisible(left.value, right.value) ->
             Integer(left.value / right.value)
@@ -85,20 +85,20 @@ fun Expression.simplify(): Expression = when(this) {
 }
 
 private fun makeConstantCoefficientTerm(e: Expression): Expression = when {
-        e is Product && e.terms.size > 1 -> {
-            val coeff = e.terms.first()
-            if (coeff is Constant) { ConstantCoefficientTerm(coeff, product(e.terms.drop(1))) } else { e }
+    e is Product && e.terms.size > 1 -> {
+        val coeff = e.terms.first()
+        if (coeff is Constant) { ConstantCoefficientTerm(coeff, product(e.terms.drop(1))) } else { e }
+    }
+    e is Negation -> {
+        val c = makeConstantCoefficientTerm(e.expression)
+        if (c is ConstantCoefficientTerm) {
+            val coeff = (c.coeff * Integer(-1)) as Constant
+            ConstantCoefficientTerm(coeff, c.term)
+        } else {
+            e
         }
-        e is Negation -> {
-            val c = makeConstantCoefficientTerm(e.expression)
-            if (c is ConstantCoefficientTerm) {
-                val coeff = (c.coeff * Integer(-1)) as Constant
-                ConstantCoefficientTerm(coeff, c.term)
-            } else {
-                e
-            }
-        }
-        else -> e
+    }
+    else -> e
 }
 
 private fun reduceConstantCoefficientTermToProduct(e: Expression) =
@@ -111,17 +111,16 @@ fun Sum.collectTerms(): Expression {
                 val coefficientTable = mutableMapOf<Expression, Constant>()
                 val (ccterms, remainingTerms) = it.partition { it is ConstantCoefficientTerm }
 
-                ccterms
-                    .forEach {
-                        it as ConstantCoefficientTerm
-                        val currentCoefficient = coefficientTable.getOrElse(it.term, { Integer(0) })
-                        val newCoefficient = currentCoefficient + it.coeff
-                        coefficientTable.put(it.term, newCoefficient as Constant)
-                    }
+                ccterms.forEach {
+                    it as ConstantCoefficientTerm
+                    val currentCoefficient = coefficientTable.getOrElse(it.term, { Integer(0) })
+                    val newCoefficient = currentCoefficient + it.coeff
+                    coefficientTable.put(it.term, newCoefficient as Constant)
+                }
 
                 coefficientTable.asIterable()
-                    .map { it -> ConstantCoefficientTerm(it.value, it.key) }
-                    .plus(remainingTerms)
+                        .map { it -> ConstantCoefficientTerm(it.value, it.key) }
+                        .plus(remainingTerms)
             }.map(::reduceConstantCoefficientTermToProduct)
     return sum(collectedTerms)
 }
