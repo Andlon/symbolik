@@ -51,8 +51,21 @@ fun Expression.text(): String = when(this) {
 fun Sum.flatten(): Sum = Sum(terms.flatMap { if (it is Sum) it.terms else listOf(it) })
 fun Product.flatten(): Product = Product(terms.flatMap { if (it is Product) it.terms else listOf(it) })
 
+fun Expression.expand(): Expression = when(this) {
+    is Product -> this.terms.fold(EmptyExpression as Expression, { acc, term ->
+        when {
+            acc is EmptyExpression -> term
+            term is Sum -> Sum(term.terms.map { Product(acc, it).expand() }).flatten()
+            acc is Sum -> Sum(acc.terms.map { Product(it, term).expand() }).flatten()
+            else -> Product(acc, term).flatten()
+        }
+    })
+    is Sum -> sum(this.terms.map { it.expand() })
+    else -> this
+}
+
 private fun List<Expression>.combineConstants(combiner: (Expression, Expression) -> Expression,
-                                      initializer: (List<Expression>) -> Expression): Expression {
+                                              initializer: (List<Expression>) -> Expression): Expression {
     val (constants, remaining) = this.partition { it is Constant }
     val factor = constants.fold(EmptyExpression as Expression, combiner)
     return initializer(listOf(factor) + remaining)

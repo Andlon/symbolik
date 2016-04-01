@@ -198,5 +198,32 @@ class ExpressionSpec : Spek() {
                 }
             }
         }
+        given("expansion of expressions") {
+            val x = Variable("x")
+            val y = Variable("y")
+            val z = Variable("z")
+            val w = Variable("w")
+            on("an expression with one set of parentheses on the left") {
+                it("should correctly expand") {
+                    val expr = Product(Sum(x, y), z)
+                    val expected = Sum(Product(x, z), Product(y, z))
+                    shouldEqual(expected, expr.expand())
+                }
+            }
+            on("an expression with one set of parentheses on the right") {
+                it("should correctly expand") {
+                    val expr = Product(x, Sum(y, z))
+                    val expected = Sum(Product(x, y), Product(x, z))
+                    shouldEqual(expected, expr.expand())
+                }
+            }
+            on("an expression with two sets of parentheses") {
+                it("should correctly expand") {
+                    val expr = Product(Sum(x, y), Sum(z, w))
+                    val expected = Sum(Product(x, z), Product(y, z), Product(x, w), Product(y, w))
+                    shouldEqual(expected, expr.expand())
+                }
+            }
+        }
     }
 }
