@@ -80,11 +80,12 @@ private fun Expression.sumTerms(): Expression = when(this) {
 }
 
 private fun Expression.combineTerms(combiner: (Expression, Expression) -> Expression,
-                                          initializer: (List<Expression>) -> Expression): Expression {
+                                    initializer: (List<Expression>) -> Expression): Expression {
     return if (this is AssociativeBinaryOperator) {
         val (constants, remaining) = this.terms.partition { it is Constant }
         val factor = constants.fold(EmptyExpression as Expression, combiner)
-        initializer(listOf(factor) + remaining)
+        val terms = if (factor is Integer && factor.value == 1) { remaining } else { listOf(factor) + remaining }
+        initializer(terms)
     } else { this }
 }
 
@@ -176,19 +177,23 @@ object ExpressionTypeComparator : Comparator<Expression> {
 }
 
 fun Expression.collect(): Expression = when(this) {
-    is Sum -> factors(this).let { it.forEach { println(it.expression.text()) }; it }.minBy { it.expression.complexity() }?.expression ?: EmptyExpression
+    is Sum -> factors(this)
+            .minBy { it.expression.complexity() }
+            ?.expression
+            ?: EmptyExpression
+    is Product -> product(terms.map { it.collect() })
     else -> this
 }
 
 data class FactorizedExpression(val factor: Expression, val operand: Expression, val remainder: Expression) {
-    val expression by lazy { sum(listOf(product(listOf(factor, operand)), remainder)) }
+    val expression by lazy { sum(listOf(product(listOf(factor, operand.simplify())), remainder.simplify())) }
 }
 
 fun factors(expr: Sum): List<FactorizedExpression> {
     val factors = expr.terms.flatMap { when(it) {
         is Product -> it.terms
         else -> listOf(it)
-    } }.distinct()
+    } }.filterNot { it is Constant }.distinct()
 
     data class IntermediateTermCollection(val factoredTerms: MutableList<Expression>,
                                           val remainderTerms: MutableList<Expression>)
@@ -222,20 +227,21 @@ fun factors(expr: Sum): List<FactorizedExpression> {
                         compositeFactoredTerms.toMutableList(),
                         intermediate1.remainderTerms)
                 val newFactor = product(listOf(factor1, factor2))
-                adjustedTable = adjustedTable.filterNot { it.key in listOf(factor1, factor2) }
-                    .plus((newFactor to newIntermediate))
+                adjustedTable = adjustedTable
+                        .filterNot { it.key in listOf(factor1, factor2) }
+                        .plus((newFactor to newIntermediate))
             }
         }
     }
 
     return adjustedTable.asIterable()
-        .map {
-            val factoredSum = sum(it.value.factoredTerms)
-                    .multiplyTerms()
-                    .sumTerms()
-            val remainderSum = sum(it.value.remainderTerms)
-                    .multiplyTerms()
-                    .sumTerms()
-            FactorizedExpression(it.key, factoredSum, remainderSum)
-        }
+            .map {
+                val factoredSum = sum(it.value.factoredTerms)
+                        .multiplyTerms()
+                        .sumTerms()
+                val remainderSum = sum(it.value.remainderTerms)
+                        .multiplyTerms()
+                        .sumTerms()
+                FactorizedExpression(it.key, factoredSum, remainderSum)
+            }
 }

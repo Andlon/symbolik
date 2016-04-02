@@ -194,7 +194,7 @@ class ExpressionSpec : Spek() {
             on("collectible paranthesized terms") {
                 it("should collect the terms") {
                     val expr = Integer(2) * (Integer(2) + x) + Integer(4) * (Integer(2) + x)
-                    shouldEqual(Integer(6) * (Integer(2) + x), expr.simplify())
+                    shouldEqual(Integer(12) + Integer(6) * x, expr.simplify())
                 }
             }
         }
@@ -237,9 +237,12 @@ class ExpressionSpec : Spek() {
                     shouldEqual(expected, expr.collect())
                 }
             }
-            on("an expression with where a product is the common factor") {
+            on("an expression where a product is the common factor") {
                 val expr = Sum(Product(x, y, z), Product(x, y, w))
-                val expected = Product(Product(x, y), Sum(z, w))
+                val expected = Product(x, y, Sum(z, w))
+                it("should recognize the product and collect it") {
+                    shouldEqual(expected, expr.collect())
+                }
             }
         }
     }
