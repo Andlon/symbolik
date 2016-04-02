@@ -40,7 +40,7 @@ interface BinaryOperator : Operator {
 }
 
 interface AssociativeBinaryOperator : BinaryOperator {
-    val terms: Iterable<Expression>
+    val terms: List<Expression>
 }
 
 object EmptyExpression : Expression
@@ -63,7 +63,7 @@ data class Decimal(val value: Double) : Constant {
     override fun decimalValue() = this
 }
 
-data class Sum(override val terms: Iterable<Expression>) : AssociativeBinaryOperator {
+data class Sum(override val terms: List<Expression>) : AssociativeBinaryOperator {
     constructor(vararg terms: Expression) : this(terms.asList())
     override fun token() = Token.BinaryOperator.Plus
 }

@@ -225,5 +225,22 @@ class ExpressionSpec : Spek() {
                 }
             }
         }
+        given("collection of terms") {
+            val x = Variable("x")
+            val y = Variable("y")
+            val z = Variable("z")
+            val w = Variable("w")
+            on("an expression with a simple common factor") {
+                it("should recognize the common factor and collect it") {
+                    val expr = Sum(Product(x, y), Product(x, z))
+                    val expected = Product(x, Sum(y, z))
+                    shouldEqual(expected, expr.collect())
+                }
+            }
+            on("an expression with where a product is the common factor") {
+                val expr = Sum(Product(x, y, z), Product(x, y, w))
+                val expected = Product(Product(x, y), Sum(z, w))
+            }
+        }
     }
 }

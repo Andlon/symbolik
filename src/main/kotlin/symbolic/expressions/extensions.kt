@@ -15,6 +15,8 @@ operator fun Expression.plus(other: Expression) = when {
 operator fun Expression.times(other: Expression) = when {
     this is Integer && other is Integer -> Integer(this.value * other.value)
     this is Constant && other is Constant -> Decimal(this.decimalValue().value * other.decimalValue().value)
+    this is Integer && other is Variable && this.value == 1 -> other
+    this is Variable && other is Integer && other.value == 1 -> this
     this is EmptyExpression -> other
     other is EmptyExpression -> this
     else -> Product(this, other)
@@ -61,28 +63,53 @@ fun Expression.expand(): Expression = when(this) {
         }
     })
     is Sum -> sum(this.terms.map { it.expand() })
+    is Negation -> Product(Integer(-1), this.expression).expand()
     else -> this
 }
 
-private fun List<Expression>.combineConstants(combiner: (Expression, Expression) -> Expression,
-                                              initializer: (List<Expression>) -> Expression): Expression {
-    val (constants, remaining) = this.partition { it is Constant }
-    val factor = constants.fold(EmptyExpression as Expression, combiner)
-    return initializer(listOf(factor) + remaining)
+private fun Expression.multiplyTerms(): Expression = when(this) {
+    is Product -> this.combineTerms(Expression::times, ::product)
+    is Sum -> sum(this.terms.map { it.multiplyTerms() })
+    else -> this
+}
+
+private fun Expression.sumTerms(): Expression = when(this) {
+    is Product -> product(this.terms.map { it.sumTerms() })
+    is Sum -> this.combineTerms(Expression::plus, ::sum)
+    else -> this
+}
+
+private fun Expression.combineTerms(combiner: (Expression, Expression) -> Expression,
+                                          initializer: (List<Expression>) -> Expression): Expression {
+    return if (this is AssociativeBinaryOperator) {
+        val (constants, remaining) = this.terms.partition { it is Constant }
+        val factor = constants.fold(EmptyExpression as Expression, combiner)
+        initializer(listOf(factor) + remaining)
+    } else { this }
 }
 
 fun Expression.simplify(): Expression = when(this) {
     is Negation -> if (this.expression is Constant) { Integer(-1) * this.expression } else { this }
-    is ConstantCoefficientTerm -> ConstantCoefficientTerm(this.coeff, this.term.simplify())
-    is Sum -> this.flatten().terms
-            .map { it.simplify() }
-            .combineConstants(Expression::plus, ::sum)
+    is Sum -> this.flatten()
+            .sumTerms()
             .let {
-                if (it is Sum) { it.collectTerms() } else { it }
+                val collected = it.collect()
+                val expandedAndCollected = it.expand().collect()
+                if(collected.complexity() < expandedAndCollected.complexity()) { collected }
+                else { expandedAndCollected }
             }
-    is Product -> this.flatten().terms
-            .map { it.simplify() }
-            .combineConstants(Expression::times, ::product)
+            .sumTerms()
+            .multiplyTerms()
+    is Product -> this.flatten()
+            .multiplyTerms()
+            .let {
+                val collected = it.collect()
+                val expandedAndCollected = it.expand().collect()
+                if(collected.complexity() < expandedAndCollected.complexity()) { collected }
+                else { expandedAndCollected }
+            }
+            .multiplyTerms()
+            .sumTerms()
     is Division -> when {
         left is Integer && right is Integer && right != Integer(0) && isDivisible(left.value, right.value) ->
             Integer(left.value / right.value)
@@ -97,45 +124,13 @@ fun Expression.simplify(): Expression = when(this) {
     else -> this
 }
 
-private fun makeConstantCoefficientTerm(e: Expression): Expression = when {
-    e is Product && e.terms.size > 1 -> {
-        val coeff = e.terms.first()
-        if (coeff is Constant) { ConstantCoefficientTerm(coeff, product(e.terms.drop(1))) } else { e }
-    }
-    e is Negation -> {
-        val c = makeConstantCoefficientTerm(e.expression)
-        if (c is ConstantCoefficientTerm) {
-            val coeff = (c.coeff * Integer(-1)) as Constant
-            ConstantCoefficientTerm(coeff, c.term)
-        } else {
-            e
-        }
-    }
-    else -> e
-}
-
-private fun reduceConstantCoefficientTermToProduct(e: Expression) =
-        if (e is ConstantCoefficientTerm) { Product(e.coeff, e.term).simplify() } else { e }
-
-fun Sum.collectTerms(): Expression {
-    val collectedTerms = terms
-            .map(::makeConstantCoefficientTerm)
-            .let {
-                val coefficientTable = mutableMapOf<Expression, Constant>()
-                val (ccterms, remainingTerms) = it.partition { it is ConstantCoefficientTerm }
-
-                ccterms.forEach {
-                    it as ConstantCoefficientTerm
-                    val currentCoefficient = coefficientTable.getOrElse(it.term, { Integer(0) })
-                    val newCoefficient = currentCoefficient + it.coeff
-                    coefficientTable.put(it.term, newCoefficient as Constant)
-                }
-
-                coefficientTable.asIterable()
-                        .map { it -> ConstantCoefficientTerm(it.value, it.key) }
-                        .plus(remainingTerms)
-            }.map(::reduceConstantCoefficientTermToProduct)
-    return sum(collectedTerms)
+fun Expression.complexity(): Int = when(this) {
+    is Constant -> 1
+    is Variable -> 2
+    is Negation -> 1
+    is Sum -> this.terms.fold(0, { acc, term -> acc + term.complexity() }) + 2 * (this.terms.size - 1)
+    is Product -> this.terms.fold(0, { acc, term -> acc + term.complexity() }) + 1 * (this.terms.size - 1)
+    else -> 0
 }
 
 fun product(terms: Iterable<Expression>): Expression = terms
@@ -143,7 +138,7 @@ fun product(terms: Iterable<Expression>): Expression = terms
         .let { when (it.size) {
             0 -> EmptyExpression
             1 -> it.single()
-            else -> Product(it)
+            else -> Product(it).flatten()
         }}
 
 fun sum(terms: Iterable<Expression>): Expression = terms
@@ -151,7 +146,7 @@ fun sum(terms: Iterable<Expression>): Expression = terms
         .let { when (it.size) {
             0 -> EmptyExpression
             1 -> it.single()
-            else -> Sum(it)
+            else -> Sum(it).flatten()
         }}
 
 private fun applyParenthesesIfNecessary(parentOperator: Operator) = { expr: Expression -> when {
@@ -178,4 +173,69 @@ object ExpressionTypeComparator : Comparator<Expression> {
         b is Variable && a !is Variable -> 1
         else -> 0
     }
+}
+
+fun Expression.collect(): Expression = when(this) {
+    is Sum -> factors(this).let { it.forEach { println(it.expression.text()) }; it }.minBy { it.expression.complexity() }?.expression ?: EmptyExpression
+    else -> this
+}
+
+data class FactorizedExpression(val factor: Expression, val operand: Expression, val remainder: Expression) {
+    val expression by lazy { sum(listOf(product(listOf(factor, operand)), remainder)) }
+}
+
+fun factors(expr: Sum): List<FactorizedExpression> {
+    val factors = expr.terms.flatMap { when(it) {
+        is Product -> it.terms
+        else -> listOf(it)
+    } }.distinct()
+
+    data class IntermediateTermCollection(val factoredTerms: MutableList<Expression>,
+                                          val remainderTerms: MutableList<Expression>)
+
+    val factorTable = factors.associate { it to IntermediateTermCollection(mutableListOf(), mutableListOf()) }
+    for (factor in factors) {
+        val intermediateCollection = factorTable[factor]!!
+
+        for (term in expr.terms) {
+            when {
+                term is Product && term.terms.contains(factor) ->
+                    intermediateCollection.factoredTerms.add(product(term.terms - factor))
+                term is Product -> intermediateCollection.remainderTerms.add(term)
+                term == factor -> intermediateCollection.factoredTerms.add(Integer(1))
+                else -> intermediateCollection.remainderTerms.add(term)
+            }
+        }
+    }
+
+    fun Expression.removeFactor(factor: Expression): Expression = when (this) {
+        is Product -> product(this.terms - factor)
+        else -> this
+    }
+
+    var adjustedTable = factorTable
+    for ((factor1, intermediate1) in factorTable) {
+        for ((factor2, intermediate2) in factorTable) {
+            if (factor1 != factor2 && intermediate1.remainderTerms == intermediate2.remainderTerms) {
+                val compositeFactoredTerms = intermediate1.factoredTerms.map { it.removeFactor(factor2) }
+                val newIntermediate = IntermediateTermCollection(
+                        compositeFactoredTerms.toMutableList(),
+                        intermediate1.remainderTerms)
+                val newFactor = product(listOf(factor1, factor2))
+                adjustedTable = adjustedTable.filterNot { it.key in listOf(factor1, factor2) }
+                    .plus((newFactor to newIntermediate))
+            }
+        }
+    }
+
+    return adjustedTable.asIterable()
+        .map {
+            val factoredSum = sum(it.value.factoredTerms)
+                    .multiplyTerms()
+                    .sumTerms()
+            val remainderSum = sum(it.value.remainderTerms)
+                    .multiplyTerms()
+                    .sumTerms()
+            FactorizedExpression(it.key, factoredSum, remainderSum)
+        }
 }

@@ -1,9 +1,6 @@
 package symbolic.cli
 
-import symbolic.expressions.EmptyExpression
-import symbolic.expressions.Expression
-import symbolic.expressions.simplify
-import symbolic.expressions.text
+import symbolic.expressions.*
 import symbolic.parser.*
 import kotlin.system.measureTimeMillis
 
@@ -54,6 +51,7 @@ class App {
             val result = ComputationResult.fromInput(input)
             printLine("Input:                 " + result.input.text())
             printLine("Simplified:            " + result.simplified.text())
+            printLine("Expanded:              " + result.input.expand().text())
 
             if (debug) {
                 printLine("Expanded:              " + result.input.expand().text())
