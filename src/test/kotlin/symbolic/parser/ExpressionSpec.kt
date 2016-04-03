@@ -219,6 +219,13 @@ class ExpressionSpec : Spek() {
                     shouldEqual(Integer(12) + Integer(6) * x, expr.simplify())
                 }
             }
+            on("x * y - [x - x] * x * y") {
+                it("should return x * y") {
+                    val expr = Sum(Product(x, y), Product(Negation(Sum(x, Negation(x))), x , y))
+                    val expected = Product(x, y)
+                    shouldEqual(expected, expr.simplify())
+                }
+            }
         }
         given("Expression expand") {
             val x = Variable("x")
@@ -272,6 +279,20 @@ class ExpressionSpec : Spek() {
                     shouldEqual(Integer(0), expr.collect())
                 }
             }
+            on("- (x * y) + x * y") {
+                it("should return 0") {
+                    val expr = Sum(Negation(Product(x, y)), Product(x, y))
+                    val expected = Integer(0)
+                    shouldEqual(expected, expr.collect())
+                }
+            }
+            on("(-x) * y + x * y") {
+                it("should return 0") {
+                    val expr = Sum(Product(Negation(x), y), Product(x, y))
+                    val expected = Integer(0)
+                    shouldEqual(expected, expr.collect())
+                }
+            }
         }
 
         given("Sum factors") {
@@ -289,6 +310,13 @@ class ExpressionSpec : Spek() {
             on("x - x") {
                 val expr = Sum(x, Negation(x))
                 val expected = listOf(FactorizedExpression(x, Sum(Integer(1), Negation(Integer(1))), EmptyExpression))
+                it("should give x as the only factor") {
+                    shouldEqual(expected, expr.factors())
+                }
+            }
+            on("-x + x") {
+                val expr = Sum(Negation(x), x)
+                val expected = listOf(FactorizedExpression(x, Sum(Negation(Integer(1)), Integer(1))))
                 it("should give x as the only factor") {
                     shouldEqual(expected, expr.factors())
                 }
