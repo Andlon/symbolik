@@ -51,7 +51,6 @@ class App {
             val result = ComputationResult.fromInput(input)
             printLine("Input:                 " + result.input.text())
             printLine("Simplified:            " + result.simplified.text())
-            printLine("Expanded:              " + result.input.expand().text())
 
             if (debug) {
                 printLine("Expanded:              " + result.input.expand().text())
