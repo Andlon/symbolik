@@ -8,6 +8,7 @@ class ExpressionSpec : Spek() {
     init {
         given("Expression text") {
             val x = Variable("x")
+            val y = Variable("y")
             on("a single variable") {
                 it("should equal the name of the variable") {
                     shouldEqual("x", x.text())
@@ -51,6 +52,27 @@ class ExpressionSpec : Spek() {
             on("an expression that requires parentheses for grouping") {
                 it("should correctly apply the parentheses") {
                     shouldEqual("(x - 2) * 2", Product(Sum(x, Integer(-2)), Integer(2)).text())
+                }
+            }
+            on("1 - [x - x]") {
+                it("should return 1 - [x - x]") {
+                    val expr = Sum(Integer(1), Negation(Sum(x, Negation(x))))
+                    val expected = "1 - (x - x)"
+                    shouldEqual(expected, expr.text())
+                }
+            }
+            on("x * y - [x - x] * x * y") {
+                it("should return x * y - [x - x] * x * y") {
+                    val expr = Sum(Product(x, y), Negation(Product(Sum(x, Negation(x)), x, y)))
+                    val expected = "x * y - (x - x) * x * y"
+                    shouldEqual(expected, expr.text())
+                }
+            }
+            on("x + y + x + y expressed in terms of nested sums") {
+                it("should return x + y + x + y") {
+                    val expr = Sum(Sum(x, y), Sum(x, y))
+                    val expected = "x + y + x + y"
+                    shouldEqual(expected, expr.text())
                 }
             }
         }

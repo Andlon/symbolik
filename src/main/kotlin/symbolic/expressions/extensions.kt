@@ -35,7 +35,7 @@ fun Expression.text(): String = when(this) {
     is Parentheses -> "(${this.expr.text()})"
     is ConstantCoefficientTerm -> product(listOf(this.coeff, this.term)).text()
     is Sum -> terms
-            .map(applyParenthesesIfNecessary(this))
+            .map { applyParenthesesIfNecessary(this, it ) }
             .fold("", { accumulated, term ->
                 accumulated + when {
                     accumulated.isEmpty() -> term.text()
@@ -45,11 +45,11 @@ fun Expression.text(): String = when(this) {
                 }
             })
     is Product -> terms
-            .map(applyParenthesesIfNecessary(this))
+            .map { applyParenthesesIfNecessary(this, it ) }
             .map(Expression::text)
             .reduce { a, b -> "$a * $b" }
     is Division -> listOf(left, right)
-            .map(applyParenthesesIfNecessary(this))
+            .map { applyParenthesesIfNecessary(this, it ) }
             .map(Expression::text)
             .reduce { a, b -> "$a / $b" }
     else -> ""
@@ -198,10 +198,15 @@ fun Expression.complexity(): Int = when(this) {
     else -> throw NotImplementedError("Complexity of expression cannot be determined")
 }
 
-private fun applyParenthesesIfNecessary(parentOperator: Operator) = { expr: Expression -> when {
-    expr is Operator && expr.token().precedence() < parentOperator.token().precedence() -> Parentheses(expr)
-    else -> expr
-}}
+private fun applyParenthesesIfNecessary(parentOperator: Operator, expr: Expression): Expression =
+        when {
+            expr is Operator && expr.token().precedence() < parentOperator.token().precedence() -> Parentheses(expr)
+            expr is Negation
+                    && expr.expression is Operator
+                    && expr.expression.token().precedence() <= parentOperator.token().precedence()
+            -> Negation(Parentheses(expr.expression))
+            else -> expr
+        }
 
 fun applyUnaryOperator(token: Token.UnaryOperator, operand: Expression) = when(token) {
     is Token.UnaryOperator.Plus -> operand
