@@ -14,3 +14,7 @@ fun <T> Stack<T>.popWhile(predicate: (T) -> Boolean): List<T> {
 }
 
 fun <T> repeat(times: Int, obj: T): List<T> = (1 .. times).map { obj }
+
+fun <T> List<T>.reduceOrNull(reducer: (T, T) -> T) =
+        if (this.isNotEmpty()) { this.reduce(reducer) }
+        else { null }

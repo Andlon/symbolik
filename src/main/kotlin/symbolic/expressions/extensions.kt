@@ -2,6 +2,7 @@ package symbolic.expressions
 
 import symbolic.parser.Token
 import symbolic.util.isDivisible
+import symbolic.util.reduceOrNull
 import symbolic.util.repeat
 import java.util.*
 
@@ -89,6 +90,7 @@ private fun Expression.sumTerms(): Expression = when(this) {
         when {
             a is Integer && b is Integer -> Integer(a.value + b.value)
             a is Constant && b is Constant -> Decimal(a.decimalValue().value + b.decimalValue().value)
+        // This code is extremely verbose. TODO: Refactor
             else -> sum(a, b)
         }
     }, ::sum)
@@ -110,7 +112,50 @@ private fun Expression.combineTermsWith(combiner: (Expression, Expression) -> Ex
     } else { this }
 }
 
-fun Expression.combineTerms() = this.multiplyTerms().sumTerms()
+fun List<Integer>.sum(): Integer? = reduceOrNull { a, b -> Integer(a.value + b.value) }
+fun List<Integer>.product(): Integer? = reduceOrNull  { a, b -> Integer(a.value * b.value) }
+fun List<Decimal>.sum(): Decimal? = reduceOrNull { a, b -> Decimal(a.value + b.value) }
+fun List<Decimal>.product(): Decimal? = reduceOrNull { a, b -> Decimal(a.value * b.value) }
+
+fun Expression.combineTerms(): Expression = when(this) {
+    is Product -> {
+        val combinedTerms = terms.map { it.combineTerms() }
+        val (constants, remainingTerms) = combinedTerms.partition { it is Constant }
+        val integerFactor = constants.filterIsInstance<Integer>().product()
+        val decimalFactor = constants.filterIsInstance<Decimal>().product()
+        val remaining = product(remainingTerms)
+
+        when {
+            integerFactor?.value == 0 -> Integer(0)
+            integerFactor?.value == 1 -> product(decimalFactor ?: EmptyExpression, remaining).combineTerms()
+            decimalFactor == null -> product(integerFactor ?: EmptyExpression, remaining)
+            integerFactor == null -> product(decimalFactor, remaining)
+            else -> product(Decimal(integerFactor.value * decimalFactor.value), remaining)
+        }
+    }
+    is Sum -> {
+        val combinedTerms = terms.map { it.combineTerms() }
+        val (constants, remainingTerms) = combinedTerms.partition { it is Constant }
+        val integerSum = constants.filterIsInstance<Integer>().sum()
+        val decimalSum = constants.filterIsInstance<Decimal>().sum()
+        val remaining = sum(remainingTerms)
+
+        when {
+            integerSum?.value == 0 && remaining != EmptyExpression ->
+                sum(decimalSum ?: EmptyExpression, remaining).combineTerms()
+            decimalSum?.value == 0.0 -> sum(integerSum ?: EmptyExpression, remaining).combineTerms()
+            decimalSum == null -> sum(integerSum ?: EmptyExpression, remaining)
+            integerSum == null -> sum(decimalSum, remaining)
+            else -> sum(Decimal(integerSum.value + decimalSum.value), remaining)
+        }
+    }
+    is Negation -> {
+        val combined = expression.combineTerms()
+        if (combined is Constant) { product(Integer(-1), combined).combineTerms() }
+        else { Negation(combined) }
+    }
+    else -> this
+}
 
 fun Expression.simplify(): Expression = when(this) {
     is Negation -> product(Integer(-1), this.expression).simplify()

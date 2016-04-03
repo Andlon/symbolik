@@ -312,5 +312,164 @@ class ExpressionSpec : Spek() {
 
             }
         }
+
+        given("Expression combineTerms") {
+            val x = Variable("x")
+            val y = Variable("y")
+            val z = Variable("z")
+            val w = Variable("w")
+            on("2 * 3") {
+                it("should return 6") {
+                    val expr = Product(Integer(2), Integer(2))
+                    val expected = Integer(4)
+                    shouldEqual(expected, expr.combineTerms())
+                }
+            }
+            on("2 + 3") {
+                it("should return 5") {
+                    val expr = Sum(Integer(2), Integer(2))
+                    val expected = Integer(4)
+                    shouldEqual(expected, expr.combineTerms())
+                }
+            }
+            on("2 + 3 * 4") {
+                it("should return 24") {
+                    val expr = Sum(Integer(2), Product(Integer(2), Integer(2)))
+                    val expected = Integer(6)
+                    shouldEqual(expected, expr.combineTerms())
+                }
+            }
+            on("(2 + 3) * 4") {
+                it("should return 20") {
+                    val expr = Product(Sum(Integer(2), Integer(3)), Integer(4))
+                    val expected = Integer(20)
+                    shouldEqual(expected, expr.combineTerms())
+                }
+            }
+            on("1 * 2") {
+                it("should return 2") {
+                    val expr = Product(Integer(1), Integer(2))
+                    val expected = Integer(2)
+                    shouldEqual(expected, expr.combineTerms())
+                }
+            }
+            on("0 + 2") {
+                it("should return 2") {
+                    val expr = Sum(Integer(0), Integer(2))
+                    val expected = Integer(2)
+                    shouldEqual(expected, expr.combineTerms())
+                }
+            }
+            on("0") {
+                it("should return 0") {
+                    val expr = Integer(0)
+                    val expected = Integer(0)
+                    shouldEqual(expected, expr.combineTerms())
+                }
+            }
+            on("1") {
+                it("should return 1") {
+                    val expr = Integer(1)
+                    val expected = Integer(1)
+                    shouldEqual(expected, expr.combineTerms())
+                }
+            }
+            on("-0") {
+                it("should return 0") {
+                    val expr = Negation(Integer(0))
+                    val expected = Integer(0)
+                    shouldEqual(expected, expr.combineTerms())
+                }
+            }
+            on("0 + 0") {
+                it("should return 0") {
+                    val expr = Sum(Integer(0), Integer(0))
+                    val expected = Integer(0)
+                    shouldEqual(expected, expr.combineTerms())
+                }
+            }
+            on("0 * 0") {
+                it("should return 0") {
+                    val expr = Product(Integer(0), Integer(0))
+                    val expected = Integer(0)
+                    shouldEqual(expected, expr.combineTerms())
+                }
+            }
+            on("0 * 1") {
+                it("should return 0") {
+                    val expr = Product(Integer(0), Integer(1))
+                    val expected = Integer(0)
+                    shouldEqual(expected, expr.combineTerms())
+                }
+            }
+            on("0 - 0") {
+                it("should return 0") {
+                    val expr = Sum(Integer(0), Negation(Integer(0)))
+                    val expected = Integer(0)
+                    shouldEqual(expected, expr.combineTerms())
+                }
+            }
+            on("1 - 1") {
+                it("should return 0 when Negation is used") {
+                    val expr = Sum(Integer(1), Negation(Integer(1)))
+                    val expected = Integer(0)
+                    shouldEqual(expected, expr.combineTerms())
+                }
+                it("should return 0 when a negative integer is used") {
+                    val expr = Sum(Integer(1), Integer(-1))
+                    val expected = Integer(0)
+                    shouldEqual(expected, expr.combineTerms())
+                }
+            }
+            on("-1 + 1") {
+                it("should return 0 when Negation is used") {
+                    val expr = Sum(Negation(Integer(1)), Integer(1))
+                    val expected = Integer(0)
+                    shouldEqual(expected, expr.combineTerms())
+                }
+                it("should return 0 when a negative integer is used") {
+                    val expr = Sum(Integer(-1), Integer(1))
+                    val expected = Integer(0)
+                    shouldEqual(expected, expr.combineTerms())
+                }
+            }
+            on("1 * x") {
+                it("should return x") {
+                    val expr = Product(Integer(1), x)
+                    val expected = x
+                    shouldEqual(expected, expr.combineTerms())
+                }
+            }
+            on("0 * x") {
+                it("should return 0") {
+                    val expr = Product(Integer(0), x)
+                    val expected = Integer(0)
+                    shouldEqual(expected, expr.combineTerms())
+                }
+            }
+            on("0 * 0,0") {
+                it("should return 0") {
+                    val expr = Product(Integer(0), Decimal(0.0))
+                    val expected = Integer(0)
+                    shouldEqual(expected, expr.combineTerms())
+                }
+            }
+            on("0,0 + 1") {
+                it("should return 1") {
+                    val expr = Sum(Decimal(0.0), Integer(1))
+                    val expected = Integer(1)
+                    shouldEqual(expected, expr.combineTerms())
+                }
+            }
+            on("2,0 + 3,0") {
+                it("should return 5,0") {
+                    val expr = Sum(Decimal(2.0), Decimal(3.0))
+                    val expected = Decimal(5.0)
+                    shouldEqual(expected, expr.combineTerms())
+                }
+            }
+        }
+
+
     }
 }
