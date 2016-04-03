@@ -6,7 +6,7 @@ import symbolic.expressions.*
 
 class ExpressionSpec : Spek() {
     init {
-        given("the textual representations of expressions") {
+        given("Expression text") {
             val x = Variable("x")
             on("a single variable") {
                 it("should equal the name of the variable") {
@@ -55,7 +55,7 @@ class ExpressionSpec : Spek() {
             }
         }
 
-        given("simplification of expressions") {
+        given("Expression simplify") {
             val x = Variable("x")
             val y = Variable("y")
             val z = Variable("z")
@@ -198,7 +198,7 @@ class ExpressionSpec : Spek() {
                 }
             }
         }
-        given("expansion of expressions") {
+        given("Expression expand") {
             val x = Variable("x")
             val y = Variable("y")
             val z = Variable("z")
@@ -225,7 +225,7 @@ class ExpressionSpec : Spek() {
                 }
             }
         }
-        given("collection of terms") {
+        given("Expression collect") {
             val x = Variable("x")
             val y = Variable("y")
             val z = Variable("z")
