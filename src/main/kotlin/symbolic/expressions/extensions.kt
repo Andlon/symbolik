@@ -26,6 +26,12 @@ fun sum(terms: Iterable<Expression>): Expression = terms
             else -> Sum(it).flatten()
         }}
 
+fun negate(expr: Expression) = when(expr) {
+    is EmptyExpression -> EmptyExpression
+    is Negation -> expr.expression
+    else -> Negation(expr)
+}
+
 fun Expression.text(): String = when(this) {
     is Integer -> this.value.toString()
     is Decimal -> this.value.toString()
@@ -86,6 +92,7 @@ fun Expression.combineTerms(): Expression = when(this) {
         when {
             integerFactor?.value == 0 -> Integer(0)
             integerFactor?.value == 1 -> product(decimalFactor ?: EmptyExpression, remaining).combineTerms()
+            integerFactor?.value == -1 && decimalFactor == null && remaining != EmptyExpression -> negate(remaining)
             decimalFactor == null -> product(integerFactor ?: EmptyExpression, remaining)
             integerFactor == null -> product(decimalFactor, remaining)
             else -> product(Decimal(integerFactor.value * decimalFactor.value), remaining)

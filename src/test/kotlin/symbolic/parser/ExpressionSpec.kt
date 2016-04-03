@@ -524,6 +524,13 @@ class ExpressionSpec : Spek() {
                     shouldEqual(expected, expr.combineTerms())
                 }
             }
+            on("[-1] * x") {
+                it("should return Negation(x)") {
+                    val expr = Product(Integer(-1), x)
+                    val expected = Negation(x)
+                    shouldEqual(expected, expr.combineTerms())
+                }
+            }
         }
 
 
