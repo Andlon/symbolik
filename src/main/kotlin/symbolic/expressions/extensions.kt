@@ -193,18 +193,6 @@ private fun extractFactors(expr: Expression): List<Expression> = when (expr) {
     else -> listOf(expr)
 }
 
-private fun Expression.isFactor(other: Expression): Boolean = when(this) {
-    other -> true
-    is Product -> when {
-        other is Product -> this.terms.containsAll(other.terms)
-        other is Negation && other.expression is Product -> this.terms.containsAll(other.expression.terms)
-        other is Negation -> this.terms.contains(other.expression)
-        else -> this.terms.contains(other)
-    }
-    is Negation -> expression.isFactor(other)
-    else -> false
-}
-
 /**
  * Computes the minimum multiplicity of the factor in the list of expressions.
  *
@@ -251,7 +239,7 @@ fun Sum.factors(): List<FactorizedExpression> {
     data class IntermediateTermCollection(val factoredTerms: MutableList<Expression>,
                                           val remainderTerms: MutableList<Expression>)
 
-    var factorTable = factors.associate { it to IntermediateTermCollection(mutableListOf(), mutableListOf()) }
+    val factorTable = factors.associate { it to IntermediateTermCollection(mutableListOf(), mutableListOf()) }
     for (factor in factors) {
         val intermediateCollection = factorTable[factor]!!
 
@@ -272,53 +260,31 @@ fun Sum.factors(): List<FactorizedExpression> {
         }
     }
 
-    factorTable = factorTable.mapKeys {
-        // Multiply the factor the maximum number of times, N, such that
-        // it appears N times in each factored term. Note that in each factoredTerm it
-        // only appears N - 1 times, as we've already factored out one
-        val multiplicity = multiplicity(it.key, it.value.factoredTerms)
-        repeat(multiplicity + 1, it.key)
-    }.mapValues {
-        val repeatedFactor = it.key
-        // Adjust the factoredTerms accordingly, by removing the factor (N - 1) times
-        val factoredTerms = it.value.factoredTerms.map { it.removeFactors(repeatedFactor.drop(1)) }
-        IntermediateTermCollection(factoredTerms.toMutableList(), it.value.remainderTerms)
-    }.mapKeys { product(it.key) }
-
-    factorTable.asIterable()
+    return factorTable
+            .mapKeys {
+                // Multiply the factor the maximum number of times, N, such that
+                // it appears N times in each factored term. Note that in each factoredTerm it
+                // only appears N - 1 times, as we've already factored out one
+                val multiplicity = multiplicity(it.key, it.value.factoredTerms)
+                repeat(multiplicity + 1, it.key)
+            }
+            .mapValues {
+                val repeatedFactor = it.key
+                // Adjust the factoredTerms accordingly, by removing the factor (N - 1) times
+                val factoredTerms = it.value.factoredTerms.map { it.removeFactors(repeatedFactor.drop(1)) }
+                IntermediateTermCollection(factoredTerms.toMutableList(), it.value.remainderTerms)
+            }.mapKeys { product(it.key) }
+            .asIterable()
             .groupBy { it.value.remainderTerms }
             .map {
-                val remainderTerms = it.key
-                val individualFactors = it.value.map { it.value.factoredTerms }
-                //val factor =
-            }
-
-//    fun Expression.removeFactor(factor: Expression): Expression = when (this) {
-//        is Product -> product(this.terms - factor)
-//        else -> this
-//    }
-
-    //    var adjustedTable = factorTable
-    //    for ((factor1, intermediate1) in factorTable) {
-    //        for ((factor2, intermediate2) in factorTable) {
-    //            if (factor1 != factor2
-    //                    && intermediate1.remainderTerms == intermediate2.remainderTerms) {
-    //                val compositeFactoredTerms = intermediate1.factoredTerms.map { it.removeFactor(factor2) }
-    //                val newIntermediate = IntermediateTermCollection(
-    //                        compositeFactoredTerms.toMutableList(),
-    //                        intermediate1.remainderTerms)
-    //                val newFactor = product(listOf(factor1, factor2))
-    //                adjustedTable = adjustedTable
-    //                        .filterNot { it.key in listOf(factor1, factor2) }
-    //                        .plus((newFactor to newIntermediate))
-    //            }
-    //        }
-    //    }
-
-    return factorTable.asIterable()
-            .map {
-                val factoredSum = sum(it.value.factoredTerms)
-                val remainderSum = sum(it.value.remainderTerms)
-                FactorizedExpression(it.key, factoredSum, remainderSum)
+                val remainder = sum(it.key)
+                val individualFactors = it.value.map { it.key }
+                val compositeFactor = product(individualFactors)
+                val refactoredTerms = it.value.map {
+                    val factor = it.key
+                    it.value.factoredTerms.map { it.removeFactors(individualFactors - factor) }
+                }.firstOrNull() ?: listOf(EmptyExpression)
+                val operand = sum(refactoredTerms)
+                FactorizedExpression(compositeFactor, operand, remainder)
             }
 }
