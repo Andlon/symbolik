@@ -4,6 +4,8 @@ import symbolik.parser.Token
 import symbolik.util.isDivisible
 import symbolik.util.reduceOrNull
 import symbolik.util.repeat
+import kotlin.comparisons.compareBy
+import kotlin.comparisons.thenByDescending
 
 operator fun Expression.plus(other: Expression): Expression = sum(this, other)
 operator fun Expression.times(other: Expression) = product(this, other)
@@ -30,6 +32,29 @@ fun negate(expr: Expression) = when(expr) {
     is EmptyExpression -> EmptyExpression
     is Negation -> expr.expression
     else -> Negation(expr)
+}
+
+fun Expression.reorderForPresentation(): Expression {
+    return when {
+        this is Sum -> terms
+                .map { it.reorderForPresentation() }
+                .sortedWith(
+                        // Push negative terms to the end
+                        compareBy<Expression> {
+                            when {
+                                it is Constant && it.decimalValue().value < 0 -> 1
+                                it is Negation -> 1
+                                else -> 0
+                            }
+                        }.thenByDescending { it.complexity() }
+                )
+                .let { sum(it) }
+        this is Product -> terms
+                .map { it.reorderForPresentation() }
+                .sortedBy { it.complexity() }
+                .let { product(it) }
+        else -> this
+    }
 }
 
 fun Expression.text(): String = when(this) {
@@ -92,9 +117,10 @@ fun Expression.combineTerms(): Expression = when(this) {
         when {
             integerFactor?.value == 0 -> Integer(0)
             integerFactor?.value == 1 -> product(decimalFactor ?: EmptyExpression, remaining).combineTerms()
-            integerFactor?.value == -1 && decimalFactor == null && remaining != EmptyExpression -> negate(remaining)
-            decimalFactor == null -> product(integerFactor ?: EmptyExpression, remaining)
-            integerFactor == null -> product(decimalFactor, remaining)
+            integerFactor == null -> product(decimalFactor ?: EmptyExpression, remaining)
+            integerFactor.value < 0 && decimalFactor == null && remaining != EmptyExpression ->
+                negate(product(Integer(-1 * integerFactor.value), remaining).combineTerms())
+            decimalFactor == null -> product(integerFactor, remaining)
             else -> product(Decimal(integerFactor.value * decimalFactor.value), remaining)
         }
     }
@@ -123,7 +149,7 @@ fun Expression.combineTerms(): Expression = when(this) {
 }
 
 fun Expression.simplify(): Expression = when(this) {
-    is Negation -> product(Integer(-1), this.expression).simplify()
+    is Negation -> negate(expression.simplify())
     is Sum -> this.flatten()
             .let {
                 val collected = it.collect()
@@ -152,7 +178,7 @@ fun Expression.simplify(): Expression = when(this) {
         }
     }
     else -> this
-}
+}.reorderForPresentation()
 
 fun Expression.complexity(): Int = when(this) {
     is Constant -> 1

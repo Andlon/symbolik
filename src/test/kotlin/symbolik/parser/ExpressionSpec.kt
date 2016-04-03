@@ -147,7 +147,7 @@ class ExpressionSpec : Spek() {
             on("integers added to a variable on both sides") {
                 it("should sum the integers together") {
                     val expr = Sum(Integer(2), x, Integer(2))
-                    shouldEqual(Sum(Integer(4), x), expr.simplify())
+                    shouldEqual(Sum(x, Integer(4)), expr.simplify())
                 }
             }
             on("a variable multiplied by an integer on both sides") {
@@ -165,7 +165,7 @@ class ExpressionSpec : Spek() {
             on("nested Sum expressions") {
                 it("should flatten the expression") {
                     val expr = Sum(Integer(2), Sum(x, y))
-                    shouldEqual(Sum(Integer(2), x, y), expr.simplify())
+                    shouldEqual(Sum(x, y, Integer(2)), expr.simplify())
                 }
             }
             on("nested Product expressions") {
@@ -206,17 +206,17 @@ class ExpressionSpec : Spek() {
                 }
                 it("should collect the terms for negative coefficients") {
                     val expr = Sum(Product(Integer(-2), x), Product(Integer(-5), x))
-                    shouldEqual(Product(Integer(-7), x), expr.simplify())
+                    shouldEqual(Negation(Product(Integer(7), x)), expr.simplify())
                 }
                 it("should collect the terms for negated coefficients") {
                     val expr = Sum(Product(Integer(-2), x), Negation(Product(Integer(5), x)))
-                    shouldEqual(Product(Integer(-7), x), expr.simplify())
+                    shouldEqual(Negation(Product(Integer(7), x)), expr.simplify())
                 }
             }
             on("collectible paranthesized terms") {
                 it("should collect the terms") {
                     val expr = Integer(2) * (Integer(2) + x) + Integer(4) * (Integer(2) + x)
-                    shouldEqual(Integer(12) + Integer(6) * x, expr.simplify())
+                    shouldEqual(Integer(6) * x + Integer(12), expr.simplify())
                 }
             }
             on("x * y - [x - x] * x * y") {
