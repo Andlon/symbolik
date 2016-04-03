@@ -220,11 +220,11 @@ fun Expression.collect(): Expression = when(this) {
             // Note: Instead of calling collect on the remainder, we should be able to compute
             // the same result on the remainder by using the provided factors. However,
             // it should yield the same result, so for now we take the easy route.
-            .map { sum(product(it.factor, it.operand.combineTerms()), it.remainder.collect()) }
+            .map { sum(product(it.factor, it.operand), it.remainder.collect()).combineTerms() }
             .minBy { it.complexity() }
             ?: this
     is Product -> product(terms.map { it.collect() })
-//is Negation -> product(Integer(-1), this.expression).collect()
+    is Negation -> product(Integer(-1), this.expression).collect()
     else -> this
 }
 
