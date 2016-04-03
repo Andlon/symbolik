@@ -244,6 +244,73 @@ class ExpressionSpec : Spek() {
                     shouldEqual(expected, expr.collect())
                 }
             }
+            on("a subtraction of two equal products") {
+                it("should simplify to 0") {
+                    val expr = Sum(Product(x, y), Negation(Product(x, y)))
+                    shouldEqual(Integer(0), expr.collect())
+                }
+            }
+        }
+
+        given("Sum factors") {
+            val x = Variable("x")
+            val y = Variable("y")
+            val z = Variable("z")
+            val w = Variable("w")
+            on("x + x") {
+                val expr = Sum(x, x)
+                val expected = listOf(FactorizedExpression(x, Sum(Integer(1), Integer(1)), EmptyExpression))
+                it("should give x as the only factor") {
+                    shouldEqual(expected, expr.factors())
+                }
+            }
+            on("x - x") {
+                val expr = Sum(x, Negation(x))
+                val expected = listOf(FactorizedExpression(x, Sum(Integer(1), Negation(Integer(1))), EmptyExpression))
+                it("should give x as the only factor") {
+                    shouldEqual(expected, expr.factors())
+                }
+            }
+            on("x * y + x * z") {
+                val expr = Sum(Product(x, y), Product(x, z))
+                val expected = setOf(
+                        FactorizedExpression(x, Sum(y, z), EmptyExpression),
+                        FactorizedExpression(y, x, Product(x, z)),
+                        FactorizedExpression(z, x, Product(x, y))
+                )
+                it("should give x, y and z as factors with the appropriate remainders") {
+                    shouldEqual(expected, expr.factors().toSet())
+                }
+            }
+            on("x * y + x * y") {
+                val expr = Sum(Product(x, y), Product(x, y))
+                val expected = listOf(FactorizedExpression(Product(x, y), Sum(Integer(1), Integer(1))))
+                it("should give x * y as the only factor") {
+                    shouldEqual(expected, expr.factors())
+                }
+            }
+            on("x * x + x * x") {
+                val expr = Sum(Product(x, x), Product(x, x))
+                val expected = listOf(FactorizedExpression(Product(x, x), Sum(Integer(1), Integer(1))))
+                it("should give x * x as the only factor") {
+                    shouldEqual(expected, expr.factors())
+                }
+            }
+            on("x * x * x + x * x * x") {
+                val expr = Sum(Product(x, x, x), Product(x, x, x))
+                val expected = listOf(FactorizedExpression(Product(x, x, x), Sum(Integer(1), Integer(1))))
+                it("should give x * x * x as the only factor") {
+                    shouldEqual(expected, expr.factors())
+                }
+            }
+            on("x * x + x * x * x") {
+                val expr = Sum(Product(x, x), Product(x, x, x))
+                val expected = listOf(FactorizedExpression(Product(x, x), Sum(Integer(1), x)))
+                it("should give x * x as the only factor") {
+                    shouldEqual(expected, expr.factors())
+                }
+
+            }
         }
     }
 }

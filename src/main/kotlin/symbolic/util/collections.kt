@@ -12,3 +12,5 @@ fun <T> Stack<T>.popWhile(predicate: (T) -> Boolean): List<T> {
     }
     return elements
 }
+
+fun <T> repeat(times: Int, obj: T): List<T> = (1 .. times).map { obj }
