@@ -1,4 +1,4 @@
-package symbolic.util
+package symbolik.util
 
 import java.lang.Math.abs
 import java.lang.Math.min

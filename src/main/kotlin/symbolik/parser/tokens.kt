@@ -1,4 +1,4 @@
-package symbolic.parser
+package symbolik.parser
 
 interface Token {
     interface Constant : Token

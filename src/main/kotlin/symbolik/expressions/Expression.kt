@@ -1,0 +1,3 @@
+package symbolik.expressions
+
+interface Expression

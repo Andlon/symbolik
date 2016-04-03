@@ -1,4 +1,4 @@
-package symbolic.util
+package symbolik.util
 
 import java.util.Stack
 import java.util.EmptyStackException

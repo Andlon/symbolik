@@ -1,7 +1,7 @@
-package symbolic.cli
+package symbolik.cli
 
-import symbolic.expressions.*
-import symbolic.parser.*
+import symbolik.expressions.*
+import symbolik.parser.*
 import kotlin.system.measureTimeMillis
 
 private data class ComputationResult(val input: Expression, val time: Long) {

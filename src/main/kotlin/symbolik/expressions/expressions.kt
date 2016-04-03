@@ -1,6 +1,6 @@
-package symbolic.expressions
+package symbolik.expressions
 
-import symbolic.parser.Token
+import symbolik.parser.Token
 
 interface Constant : Expression {
     fun decimalValue(): Decimal

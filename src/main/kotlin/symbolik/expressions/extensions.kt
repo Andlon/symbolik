@@ -1,9 +1,9 @@
-package symbolic.expressions
+package symbolik.expressions
 
-import symbolic.parser.Token
-import symbolic.util.isDivisible
-import symbolic.util.reduceOrNull
-import symbolic.util.repeat
+import symbolik.parser.Token
+import symbolik.util.isDivisible
+import symbolik.util.reduceOrNull
+import symbolik.util.repeat
 
 operator fun Expression.plus(other: Expression): Expression = sum(this, other)
 operator fun Expression.times(other: Expression) = product(this, other)

@@ -1,4 +1,4 @@
-package symbolic.parser
+package symbolik.parser
 
 class TokenizationException(message: String) : Exception(message)
 

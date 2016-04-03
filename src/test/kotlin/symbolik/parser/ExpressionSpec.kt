@@ -1,8 +1,8 @@
-package symbolic.parser
+package symbolik.parser
 
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.shouldEqual
-import symbolic.expressions.*
+import symbolik.expressions.*
 
 class ExpressionSpec : Spek() {
     init {

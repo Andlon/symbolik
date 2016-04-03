@@ -1,8 +1,8 @@
-package symbolic.parser
+package symbolik.parser
 
-import symbolic.expressions.*
-import symbolic.util.popOrNull
-import symbolic.util.popWhile
+import symbolik.expressions.*
+import symbolik.util.popOrNull
+import symbolik.util.popWhile
 import java.util.*
 
 open class AssemblyException(message: String) : Exception(message)
