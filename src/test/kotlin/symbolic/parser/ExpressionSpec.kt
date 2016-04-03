@@ -359,7 +359,13 @@ class ExpressionSpec : Spek() {
                 it("should give x * x as the only factor") {
                     shouldEqual(expected, expr.factors())
                 }
-
+            }
+            on("1 - [x - x]") {
+                val expr = Sum(Integer(1), Negation(Sum(x, Negation(x))))
+                val expected = listOf(FactorizedExpression(Sum(x, Negation(x)), Negation(Integer(1)), Integer(1)))
+                it("should give [x - x] as the only factor, with remainder 1") {
+                    shouldEqual(expected, expr.factors())
+                }
             }
         }
 

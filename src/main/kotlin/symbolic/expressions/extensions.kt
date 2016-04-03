@@ -177,13 +177,14 @@ fun applyUnaryOperator(token: Token.UnaryOperator, operand: Expression) = when(t
 
 fun Expression.collect(): Expression = when(this) {
     is Sum -> factors()
-            .let {
-                it
-            }
             // Note: Instead of calling collect on the remainder, we should be able to compute
             // the same result on the remainder by using the provided factors. However,
             // it should yield the same result, so for now we take the easy route.
-            .map { sum(product(it.factor, it.operand.collect()), it.remainder.collect()).combineTerms() }
+            .map {
+                val multipliedOut = product(it.factor.collect(), it.operand.collect())
+                val remainder = it.remainder.collect()
+                sum(multipliedOut, remainder).combineTerms()
+            }
             .minBy { it.complexity() }
             ?: this
     is Product -> product(terms.map { it.collect() })
