@@ -56,6 +56,7 @@ class App {
             printLine("Simplified:            " + result.simplified.text())
 
             if (debug) {
+                printLine("Expanded:              " + result.input.expand().text())
                 printLine("With types:            " + result.input.toString())
                 printLine("Simplified with types: " + result.simplified.toString())
                 skipLine()
