@@ -4,7 +4,6 @@ import symbolic.parser.Token
 import symbolic.util.isDivisible
 import symbolic.util.reduceOrNull
 import symbolic.util.repeat
-import java.util.*
 
 operator fun Expression.plus(other: Expression): Expression = sum(this, other)
 operator fun Expression.times(other: Expression) = product(this, other)
@@ -33,7 +32,6 @@ fun Expression.text(): String = when(this) {
     is Variable -> this.value
     is Negation -> "-${this.expression.text()}"
     is Parentheses -> "(${this.expr.text()})"
-    is ConstantCoefficientTerm -> product(listOf(this.coeff, this.term)).text()
     is Sum -> terms
             .map { applyParenthesesIfNecessary(this, it ) }
             .fold("", { accumulated, term ->
@@ -70,46 +68,6 @@ fun Expression.expand(): Expression = when(this) {
     is Sum -> sum(this.terms.map { it.expand() })
     is Negation -> product(Integer(-1), this.expression).expand()
     else -> this
-}
-
-private fun Expression.multiplyTerms(): Expression = when(this) {
-    is Product -> this.combineTermsWith({ a, b ->
-        when {
-            a is Integer && b is Integer -> Integer(a.value * b.value)
-            a is Constant && b is Constant -> Decimal(a.decimalValue().value * b.decimalValue().value)
-            else -> product(a, b)
-        }
-    }, ::product)
-    is Sum -> sum(this.terms.map { it.multiplyTerms() })
-    else -> this
-}
-
-private fun Expression.sumTerms(): Expression = when(this) {
-    is Product -> product(this.terms.map { it.sumTerms() })
-    is Sum -> this.combineTermsWith({ a, b ->
-        when {
-            a is Integer && b is Integer -> Integer(a.value + b.value)
-            a is Constant && b is Constant -> Decimal(a.decimalValue().value + b.decimalValue().value)
-        // This code is extremely verbose. TODO: Refactor
-            else -> sum(a, b)
-        }
-    }, ::sum)
-    else -> this
-}
-
-private fun Expression.combineTermsWith(combiner: (Expression, Expression) -> Expression,
-                                        initializer: (List<Expression>) -> Expression): Expression {
-    return if (this is AssociativeBinaryOperator) {
-        val (constants, remaining) = this.terms.partition { it is Constant }
-        val factor = constants.fold(EmptyExpression as Expression, combiner)
-        val terms = when {
-            this is Product && factor is Integer && factor.value == 1 -> remaining
-            this is Product && factor is Integer && factor.value == 0 -> listOf(Integer(0))
-            else -> listOf(factor) + remaining
-        }
-
-        initializer(terms)
-    } else { this }
 }
 
 fun List<Integer>.sum(): Integer? = reduceOrNull { a, b -> Integer(a.value + b.value) }
